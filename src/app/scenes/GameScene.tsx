@@ -1,9 +1,11 @@
 import { Scene } from "phaser";
-import { useEffect } from "react";
+import { wordPool } from "../constants/wordPool";
+import { colors, hexadecimalColors } from "../constants/colors";
 
 interface Asteroid {
 	sprite: Phaser.GameObjects.Sprite;
 	text: Phaser.GameObjects.Text;
+	originalWord: string;
 	word: string;
 }
 
@@ -11,57 +13,9 @@ export class GameScene extends Scene {
 	private asteroids: Asteroid[] = [];
 	private score: number = 0;
 	private scoreText!: Phaser.GameObjects.Text;
-	private phrasePool: string[] = [
-		"Time heals all wounds",
-		"Live and let live",
-		"Actions speak louder",
-		"Better late than never",
-		"Love conquers all",
-		"Easy come, easy go",
-		"Out of sight",
-		"Out of mind",
-		"Birds of a feather",
-		"Stick together",
-		"Every cloud has a",
-        "Silver lining",
-		"Ignorance is bliss",
-        "Look before you leap",
-		"An apple a day",
-        "Keeps the doctor away",
-		"Practice makes perfect",
-		"All is fair",
-        "In love and war",
-		"Knowledge is power",
-        "Fortune favors the bold",
-		"Every dog has its day",
-		"Beauty is in the eye",
-		"The early bird catches",
-		"Absence makes the heart",
-		"A stitch in time",
-		"The grass is always",
-		"All that glitter",
-		"Half a loaf",
-		"The more the merrier",
-		"Actions speak louder",
-		"A rolling stone gathers",
-		"In the nick of time",
-		"In the heat of",
-		"Like father, like son",
-		"Laugh and the world",
-		"A picture is worth",
-		"Two heads are better",
-		"No pain, no gain",
-		"People who live in",
-		"The pen is mightier",
-		"A watched pot never",
-		"Give credit where credit",
-		"History repeats itself",
-		"When in Rome, do",
-		"You reap what you",
-		"The squeaky wheel gets",
-		"You scratch my back",
-		"Actions speak louder",
-	];
+	private scoreUpdateText!: Phaser.GameObjects.Text;
+	private wordPool: string[] = wordPool;
+	private ship!: Phaser.GameObjects.Sprite;
 
 	constructor() {
 		super({ key: "GameScene" });
@@ -70,12 +24,26 @@ export class GameScene extends Scene {
 	create() {
 		const { width, height } = this.cameras.main;
 
-		// Add score display
-		this.scoreText = this.add.text(32, 520, "Score: 0", {
+		const background = this.add.image(width, height / 2, "background");
+		this.ship = this.add.sprite(width / 2, height - 50, "ship").setScale(0.75);
+
+		const scoreLabel = this.add.text(32, 520, "Score: ", {
 			fontSize: "32px",
 			fontFamily: "Monospace",
-			color: "#F0F0F0",
+			color: colors.red,
 		});
+
+		// Add score display
+		this.scoreText = this.add.text(
+			scoreLabel.x + scoreLabel.width - 2,
+			520,
+			"0",
+			{
+				fontSize: "32px",
+				fontFamily: "Monospace",
+				color: colors.white,
+			}
+		);
 
 		// Set up keyboard input
 		this.input.keyboard?.on("keydown", this.handleKeyInput, this);
@@ -107,36 +75,93 @@ export class GameScene extends Scene {
 	private spawnAsteroid() {
 		const { width } = this.cameras.main;
 		const x = Phaser.Math.Between(50, width - 50);
+		const spinSpeed = Phaser.Math.Between(2000, 4000);
+		const spinDirection = Phaser.Math.Between(0, 1) === 0 ? -1 : 1;
+		const scale = Phaser.Math.Between(50, 100) / 100;
 
-		// Get all current starting letters on screen
 		const currentStartLetters = this.asteroids.map((asteroid) =>
 			asteroid.word.charAt(0).toLowerCase()
 		);
 
-		// Filter the phrasePool to only phrases that start with unused letters
-		const availablePhrases = this.phrasePool.filter(
-			(phrase) => !currentStartLetters.includes(phrase.charAt(0).toLowerCase())
+		// filter out the words that start with the same letter as the current asteroids
+		// filter out the words that are already in the asteroids
+		const availablePhrases = this.wordPool.filter(
+			(phrase) =>
+				!currentStartLetters.includes(phrase.charAt(0).toLowerCase()) &&
+				!this.asteroids.some((asteroid) => asteroid.word === phrase)
 		);
 
-		// If no available phrases with unique starting letters, just pick any phrase
-		// This prevents the game from getting stuck if all letters are in use
 		const word =
 			availablePhrases.length > 0
 				? availablePhrases[Phaser.Math.Between(0, availablePhrases.length - 1)]
-				: this.phrasePool[Phaser.Math.Between(0, this.phrasePool.length - 1)];
+				: this.wordPool[Phaser.Math.Between(0, this.wordPool.length - 1)];
 
-		// Create asteroid sprite
-		const sprite = this.add.sprite(x, -50, "asteroid").setScale(0.5);
+		const originalWord = word;
 
-		// Add text on the asteroid
+		const sprite = this.add.sprite(x, -50, "asteroid").setScale(scale);
+
+		sprite.angle = Phaser.Math.Between(0, 360);
+
+		this.tweens.add({
+			targets: sprite,
+			angle: sprite.angle + spinDirection * 360,
+			duration: spinSpeed,
+			repeat: -1,
+		});
+
 		const text = this.add
 			.text(x, -50, word, {
 				fontSize: "20px",
-				color: "#ffffff",
+				color: colors.white,
 			})
 			.setOrigin(0.5);
 
-		this.asteroids.push({ sprite, text, word });
+		this.asteroids.push({ sprite, text, word, originalWord });
+	}
+
+	private shootMissile(targetX: number, targetY: number) {
+		const missile = this.add.ellipse(
+			this.ship.x,
+			this.ship.y - 20,
+			8,
+			16,
+			hexadecimalColors.green
+		);
+
+		// Calculate angle between ship and target
+		const angle = Phaser.Math.Angle.Between(
+			missile.x,
+			missile.y,
+			targetX,
+			targetY
+		);
+
+		// Rotate missile to point at target
+		missile.rotation = angle - Math.PI / 2;
+
+		// Animate missile
+		this.tweens.add({
+			targets: missile,
+			x: targetX,
+			y: targetY,
+			duration: 200, // Adjust speed as needed
+			onComplete: () => {
+				// Create small impact effect
+				const impact = this.add.particles(targetX, targetY, "particle", {
+					speed: { min: 20, max: 40 },
+					scale: { start: 0.4, end: 0 },
+					lifespan: 200,
+					quantity: 3,
+					blendMode: "ADD",
+				});
+
+				// Clean up impact and missile
+				this.time.delayedCall(200, () => {
+					impact.destroy();
+					missile.destroy();
+				});
+			},
+		});
 	}
 
 	private handleKeyInput(event: KeyboardEvent) {
@@ -145,13 +170,13 @@ export class GameScene extends Scene {
 		for (let i = this.asteroids.length - 1; i >= 0; i--) {
 			const asteroid = this.asteroids[i];
 
-			// Check if the typed character matches the start of the word
 			if (asteroid.word.toLowerCase().startsWith(char)) {
+				// Shoot missile at the asteroid
+				this.shootMissile(asteroid.sprite.x, asteroid.sprite.y);
+
 				if (asteroid.word.length === 1) {
-					// Word completed, destroy asteroid
 					this.destroyAsteroid(i);
 				} else {
-					// Remove first character from word
 					asteroid.word = asteroid.word.slice(1);
 					asteroid.text.setText(asteroid.word);
 				}
@@ -160,22 +185,52 @@ export class GameScene extends Scene {
 		}
 	}
 
+	private updateScore(wordLength: number) {
+		const scoreUpdateX = Phaser.Math.Between(80, 220);
+		const scoreUpdateY = Phaser.Math.Between(495, 505);
+		const scoreUpdateTravelDistance = Phaser.Math.Between(80, 100);
+		this.score += wordLength;
+		this.scoreUpdateText = this.add.text(
+			scoreUpdateX,
+			scoreUpdateY,
+			`+${wordLength}`,
+			{
+				fontSize: "22px",
+				color: colors.green,
+			}
+		);
+		this.scoreUpdateText.rotation = Phaser.Math.DegToRad(
+			Phaser.Math.Between(-30, 30)
+		);
+
+		this.tweens.add({
+			targets: this.scoreUpdateText,
+			y: scoreUpdateY - scoreUpdateTravelDistance,
+			alpha: 0,
+			duration: 1000,
+			onComplete: () => {
+				this.scoreUpdateText.destroy();
+			},
+		});
+
+		this.scoreText.setText(`${this.score}`);
+	}
+
 	private destroyAsteroid(index: number) {
 		const asteroid = this.asteroids[index];
 
-		// Create particle emitter with smoother scaling animation
 		const particles = this.add.particles(
 			asteroid.sprite.x,
 			asteroid.sprite.y,
 			"particle",
 			{
-				speed: { min: 50, max: 150 }, // Add some speed variation
-				lifespan: 1500, // Match the 2-second duration
-				scale: { start: 0.8, end: 0 }, // Scale down to zero
-				quantity: 5, // Increased for better effect
-				rotate: { min: 0, max: 360 }, // Add some rotation
-				alpha: { start: 1, end: 0 }, // Fade out
-				blendMode: "ADD", // Makes particles blend/glow
+				speed: { min: 50, max: 150 },
+				lifespan: 1500,
+				scale: { start: 0.8, end: 0 },
+				quantity: 5,
+				rotate: { min: 0, max: 360 },
+				alpha: { start: 1, end: 0 },
+				blendMode: "ADD",
 			}
 		);
 
@@ -190,8 +245,7 @@ export class GameScene extends Scene {
 		this.asteroids.splice(index, 1);
 
 		// Update score
-		this.score += 100;
-		this.scoreText.setText(`Score: ${this.score}`);
+		this.updateScore(asteroid.originalWord.length);
 	}
 
 	private gameOver() {
