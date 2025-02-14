@@ -1,4 +1,5 @@
 import { Scene } from "phaser";
+import { useEffect } from "react";
 
 interface Asteroid {
 	sprite: Phaser.GameObjects.Sprite;
@@ -31,9 +32,10 @@ export class GameScene extends Scene {
 		const { width, height } = this.cameras.main;
 
 		// Add score display
-		this.scoreText = this.add.text(16, 16, "Score: 0", {
-			fontSize: "24px",
-			color: "#ffffff",
+		this.scoreText = this.add.text(32, 520, "Score: 0", {
+			fontSize: "32px",
+			fontFamily: "Monospace",
+			color: "#F0F0F0",
 		});
 
 		// Set up keyboard input
@@ -107,12 +109,25 @@ export class GameScene extends Scene {
 	private destroyAsteroid(index: number) {
 		const asteroid = this.asteroids[index];
 
-		// Add explosion animation here
-		this.add.particles(asteroid.sprite.x, asteroid.sprite.y, "particle", {
-			speed: 100,
-			lifespan: 800,
-			scale: { start: 1, end: 0 },
-			quantity: 10,
+		// Create particle emitter with smoother scaling animation
+		const particles = this.add.particles(
+			asteroid.sprite.x,
+			asteroid.sprite.y,
+			"particle",
+			{
+				speed: { min: 50, max: 150 }, // Add some speed variation
+				lifespan: 1500, // Match the 2-second duration
+				scale: { start: 0.8, end: 0 }, // Scale down to zero
+				quantity: 5, // Increased for better effect
+				rotate: { min: 0, max: 360 }, // Add some rotation
+				alpha: { start: 1, end: 0 }, // Fade out
+				blendMode: "ADD", // Makes particles blend/glow
+			}
+		);
+
+		// Set timer to destroy the emitter
+		this.time.delayedCall(2000, () => {
+			particles.destroy();
 		});
 
 		// Remove asteroid

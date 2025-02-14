@@ -8,7 +8,7 @@ export const gameConfig: Types.Core.GameConfig = {
 	parent: "game-container",
 	width: 800,
 	height: 600,
-	backgroundColor: "#000000",
+	backgroundColor: "#292929",
 	physics: {
 		default: "arcade",
 		arcade: {
