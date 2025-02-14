@@ -1,6 +1,6 @@
 import { Scene } from "phaser";
-import { colors } from "../constants/colors";
 import { wordPool } from "../constants/wordPool";
+import { colors, hexadecimalColors } from "../constants/colors";
 
 interface Asteroid {
 	sprite: Phaser.GameObjects.Sprite;
@@ -15,6 +15,7 @@ export class GameScene extends Scene {
 	private scoreText!: Phaser.GameObjects.Text;
 	private scoreUpdateText!: Phaser.GameObjects.Text;
 	private wordPool: string[] = wordPool;
+	private ship!: Phaser.GameObjects.Sprite;
 
 	constructor() {
 		super({ key: "GameScene" });
@@ -22,6 +23,10 @@ export class GameScene extends Scene {
 
 	create() {
 		const { width, height } = this.cameras.main;
+
+		const background = this.add.image(width, height / 2, "background");
+		this.ship = this.add.sprite(width / 2, height - 50, "ship").setScale(0.75);
+
 		const scoreLabel = this.add.text(32, 520, "Score: ", {
 			fontSize: "32px",
 			fontFamily: "Monospace",
@@ -29,11 +34,16 @@ export class GameScene extends Scene {
 		});
 
 		// Add score display
-		this.scoreText = this.add.text(scoreLabel.x + scoreLabel.width - 2, 520, "0", {
-			fontSize: "32px",
-			fontFamily: "Monospace",
-			color: colors.white,
-		});
+		this.scoreText = this.add.text(
+			scoreLabel.x + scoreLabel.width - 2,
+			520,
+			"0",
+			{
+				fontSize: "32px",
+				fontFamily: "Monospace",
+				color: colors.white,
+			}
+		);
 
 		// Set up keyboard input
 		this.input.keyboard?.on("keydown", this.handleKeyInput, this);
@@ -104,6 +114,51 @@ export class GameScene extends Scene {
 		this.asteroids.push({ sprite, text, word, originalWord });
 	}
 
+	private shootMissile(targetX: number, targetY: number) {
+		const missile = this.add.ellipse(
+			this.ship.x,
+			this.ship.y - 20,
+			8,
+			16,
+			hexadecimalColors.green
+		);
+
+		// Calculate angle between ship and target
+		const angle = Phaser.Math.Angle.Between(
+			missile.x,
+			missile.y,
+			targetX,
+			targetY
+		);
+
+		// Rotate missile to point at target
+		missile.rotation = angle - Math.PI / 2;
+
+		// Animate missile
+		this.tweens.add({
+			targets: missile,
+			x: targetX,
+			y: targetY,
+			duration: 200, // Adjust speed as needed
+			onComplete: () => {
+				// Create small impact effect
+				const impact = this.add.particles(targetX, targetY, "particle", {
+					speed: { min: 20, max: 40 },
+					scale: { start: 0.4, end: 0 },
+					lifespan: 200,
+					quantity: 3,
+					blendMode: "ADD",
+				});
+
+				// Clean up impact and missile
+				this.time.delayedCall(200, () => {
+					impact.destroy();
+					missile.destroy();
+				});
+			},
+		});
+	}
+
 	private handleKeyInput(event: KeyboardEvent) {
 		const char = event.key.toLowerCase();
 
@@ -111,6 +166,9 @@ export class GameScene extends Scene {
 			const asteroid = this.asteroids[i];
 
 			if (asteroid.word.toLowerCase().startsWith(char)) {
+				// Shoot missile at the asteroid
+				this.shootMissile(asteroid.sprite.x, asteroid.sprite.y);
+
 				if (asteroid.word.length === 1) {
 					this.destroyAsteroid(i);
 				} else {
@@ -131,10 +189,10 @@ export class GameScene extends Scene {
 			scoreUpdateX,
 			scoreUpdateY,
 			`+${wordLength}`,
-            {
-                fontSize: "22px",
-                color: colors.green,
-            }
+			{
+				fontSize: "22px",
+				color: colors.green,
+			}
 		);
 		this.scoreUpdateText.rotation = Phaser.Math.DegToRad(
 			Phaser.Math.Between(-30, 30)
