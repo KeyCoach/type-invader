@@ -1,5 +1,6 @@
 import { Scene } from "phaser";
 import { colors } from "../constants/colors";
+import { wordPool } from "../constants/wordPool";
 
 interface Asteroid {
 	sprite: Phaser.GameObjects.Sprite;
@@ -13,33 +14,7 @@ export class GameScene extends Scene {
 	private score: number = 0;
 	private scoreText!: Phaser.GameObjects.Text;
 	private scoreUpdateText!: Phaser.GameObjects.Text;
-	private wordPool: string[] = [
-		"crouch",
-		"quest",
-		"run",
-		"deport",
-		"release",
-		"tender",
-		"multimedia",
-		"voucher",
-		"trail",
-		"civilian",
-		"lie",
-		"chord",
-		"look",
-		"credit",
-		"route",
-		"regulation",
-		"habitat",
-		"suburb",
-		"gene",
-		"spontaneous",
-		"slant",
-		"compact",
-		"convulsion",
-		"prayer",
-		"suntan",
-	];
+	private wordPool: string[] = wordPool;
 
 	constructor() {
 		super({ key: "GameScene" });
@@ -47,12 +22,17 @@ export class GameScene extends Scene {
 
 	create() {
 		const { width, height } = this.cameras.main;
-
-		// Add score display
-		this.scoreText = this.add.text(32, 520, "Score: 0", {
+		const scoreLabel = this.add.text(32, 520, "Score: ", {
 			fontSize: "32px",
 			fontFamily: "Monospace",
-			color: "#F0F0F0",
+			color: colors.red,
+		});
+
+		// Add score display
+		this.scoreText = this.add.text(scoreLabel.x + scoreLabel.width - 2, 520, "0", {
+			fontSize: "32px",
+			fontFamily: "Monospace",
+			color: colors.white,
 		});
 
 		// Set up keyboard input
@@ -150,12 +130,15 @@ export class GameScene extends Scene {
 		this.scoreUpdateText = this.add.text(
 			scoreUpdateX,
 			scoreUpdateY,
-			`+${wordLength}`
+			`+${wordLength}`,
+            {
+                fontSize: "22px",
+                color: colors.green,
+            }
 		);
 		this.scoreUpdateText.rotation = Phaser.Math.DegToRad(
 			Phaser.Math.Between(-30, 30)
 		);
-		this.scoreUpdateText.setColor(colors.green);
 
 		this.tweens.add({
 			targets: this.scoreUpdateText,
@@ -167,7 +150,7 @@ export class GameScene extends Scene {
 			},
 		});
 
-		this.scoreText.setText(`Score: ${this.score}`);
+		this.scoreText.setText(`${this.score}`);
 	}
 
 	private destroyAsteroid(index: number) {
