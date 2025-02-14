@@ -8,7 +8,7 @@ export class MenuScene extends Scene {
 	preload() {
 		this.load.image("asteroid", "/assets/img/sprite/asteroid.png");
 		this.load.image("particle", "/assets/img/sprite/particle.png");
-        // this.load.image("background", "/assets/img/bg/pixel-galaxy.png");
+		// this.load.image("background", "/assets/img/bg/pixel-galaxy.png");
         this.load.image("background", "/assets/img/bg/blue-galaxy.png");
         this.load.image("ship", "/assets/img/sprite/ship.png");
 	}

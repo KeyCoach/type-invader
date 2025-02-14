@@ -75,15 +75,20 @@ export class GameScene extends Scene {
 	private spawnAsteroid() {
 		const { width } = this.cameras.main;
 		const x = Phaser.Math.Between(50, width - 50);
-		const randomSpinSpeed = Phaser.Math.Between(2000, 4000);
+		const spinSpeed = Phaser.Math.Between(2000, 4000);
 		const spinDirection = Phaser.Math.Between(0, 1) === 0 ? -1 : 1;
+		const scale = Phaser.Math.Between(50, 100) / 100;
 
 		const currentStartLetters = this.asteroids.map((asteroid) =>
 			asteroid.word.charAt(0).toLowerCase()
 		);
 
+		// filter out the words that start with the same letter as the current asteroids
+		// filter out the words that are already in the asteroids
 		const availablePhrases = this.wordPool.filter(
-			(phrase) => !currentStartLetters.includes(phrase.charAt(0).toLowerCase())
+			(phrase) =>
+				!currentStartLetters.includes(phrase.charAt(0).toLowerCase()) &&
+				!this.asteroids.some((asteroid) => asteroid.word === phrase)
 		);
 
 		const word =
@@ -93,21 +98,21 @@ export class GameScene extends Scene {
 
 		const originalWord = word;
 
-		const sprite = this.add.sprite(x, -50, "asteroid").setScale(0.5);
+		const sprite = this.add.sprite(x, -50, "asteroid").setScale(scale);
 
 		sprite.angle = Phaser.Math.Between(0, 360);
 
 		this.tweens.add({
 			targets: sprite,
 			angle: sprite.angle + spinDirection * 360,
-			duration: randomSpinSpeed,
+			duration: spinSpeed,
 			repeat: -1,
 		});
 
 		const text = this.add
 			.text(x, -50, word, {
 				fontSize: "20px",
-				color: "#ffffff",
+				color: colors.white,
 			})
 			.setOrigin(0.5);
 
