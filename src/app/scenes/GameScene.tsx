@@ -50,7 +50,7 @@ export class GameScene extends Scene {
 
 		// Start spawning asteroids
 		this.time.addEvent({
-			delay: 2000,
+			delay: 1000,
 			callback: this.spawnAsteroid,
 			callbackScope: this,
 			loop: true,
@@ -72,35 +72,59 @@ export class GameScene extends Scene {
 		}
 	}
 
+	// ask Toph if he wants to adhere to SRP (Single Responsibility Principle) or nah
+
 	private spawnAsteroid() {
-		const { width } = this.cameras.main;
-		const x = Phaser.Math.Between(50, width - 50);
-		const spinSpeed = Phaser.Math.Between(2000, 4000);
-		const spinDirection = Phaser.Math.Between(0, 1) === 0 ? -1 : 1;
+		const x = this.getAsteroidSpawnX();
+		const word = this.getAsteroidWord();
+		const originalWord = word;
 		const scale = Phaser.Math.Between(50, 100) / 100;
 
+		const sprite = this.createAsteroidSprite(x, scale);
+		const text = this.createAsteroidText(x, word);
+
+		this.asteroids.push({ sprite, text, word, originalWord });
+	}
+
+	private getAsteroidSpawnX(): number {
+		const { width } = this.cameras.main;
+		const maxAsteroids = Math.floor(width / 100);
+		let xPositions = Array.from({ length: maxAsteroids }, (_, i) => (i + 1) * (width / (maxAsteroids + 1)));
+
+		Phaser.Utils.Array.Shuffle(xPositions);
+
+		const minDistance = 100;
+		this.asteroids.forEach((asteroid) => {
+			xPositions = xPositions.filter(
+				(x) => Math.abs(x - asteroid.sprite.x) > minDistance
+			);
+		});
+
+		return xPositions.length > 0 ? xPositions[0] : Phaser.Math.Between(50, width - 50);
+	}
+
+	private getAsteroidWord(): string {
 		const currentStartLetters = this.asteroids.map((asteroid) =>
 			asteroid.word.charAt(0).toLowerCase()
 		);
 
-		// filter out the words that start with the same letter as the current asteroids
-		// filter out the words that are already in the asteroids
 		const availablePhrases = this.wordPool.filter(
 			(phrase) =>
 				!currentStartLetters.includes(phrase.charAt(0).toLowerCase()) &&
 				!this.asteroids.some((asteroid) => asteroid.word === phrase)
 		);
 
-		const word =
-			availablePhrases.length > 0
-				? availablePhrases[Phaser.Math.Between(0, availablePhrases.length - 1)]
-				: this.wordPool[Phaser.Math.Between(0, this.wordPool.length - 1)];
+		return availablePhrases.length > 0
+			? availablePhrases[Phaser.Math.Between(0, availablePhrases.length - 1)]
+			: this.wordPool[Phaser.Math.Between(0, this.wordPool.length - 1)];
+	}
 
-		const originalWord = word;
-
+	private createAsteroidSprite(x: number, scale: number): Phaser.GameObjects.Sprite {
 		const sprite = this.add.sprite(x, -50, "asteroid").setScale(scale);
-
 		sprite.angle = Phaser.Math.Between(0, 360);
+
+		const spinSpeed = Phaser.Math.Between(2000, 4000);
+		const spinDirection = Phaser.Math.Between(0, 1) === 0 ? -1 : 1;
 
 		this.tweens.add({
 			targets: sprite,
@@ -109,14 +133,16 @@ export class GameScene extends Scene {
 			repeat: -1,
 		});
 
-		const text = this.add
+		return sprite;
+	}
+
+	private createAsteroidText(x: number, word: string): Phaser.GameObjects.Text {
+		return this.add
 			.text(x, -50, word, {
 				fontSize: "20px",
 				color: colors.white,
 			})
 			.setOrigin(0.5);
-
-		this.asteroids.push({ sprite, text, word, originalWord });
 	}
 
 	private shootMissile(targetX: number, targetY: number) {
@@ -167,20 +193,33 @@ export class GameScene extends Scene {
 	private handleKeyInput(event: KeyboardEvent) {
 		const char = event.key.toLowerCase();
 
-		for (let i = this.asteroids.length - 1; i >= 0; i--) {
-			const asteroid = this.asteroids[i];
+		// Find the first asteroid that is currently being targeted
+		let targetedAsteroidIndex = this.asteroids.findIndex(
+			(asteroid) => asteroid.word.length < asteroid.originalWord.length
+		);
+
+		// If no asteroid is currently being targeted, find the first matching asteroid
+		if (targetedAsteroidIndex === -1) {
+			targetedAsteroidIndex = this.asteroids.findIndex((asteroid) =>
+				asteroid.word.toLowerCase().startsWith(char)
+			);
+		}
+
+		// ensure it's a valid index and if so, begin firing at asteroid as letters are typed
+		if (targetedAsteroidIndex !== -1) { 
+			const asteroid = this.asteroids[targetedAsteroidIndex];
+			asteroid.text.setStroke("red", 2); // Outline the text in red
 
 			if (asteroid.word.toLowerCase().startsWith(char)) {
 				// Shoot missile at the asteroid
 				this.shootMissile(asteroid.sprite.x, asteroid.sprite.y);
 
 				if (asteroid.word.length === 1) {
-					this.destroyAsteroid(i);
+					this.destroyAsteroid(targetedAsteroidIndex);
 				} else {
 					asteroid.word = asteroid.word.slice(1);
 					asteroid.text.setText(asteroid.word);
 				}
-				break;
 			}
 		}
 	}
@@ -225,7 +264,7 @@ export class GameScene extends Scene {
 			"particle",
 			{
 				speed: { min: 50, max: 150 },
-				lifespan: 1500,
+				lifespan: 1000,
 				scale: { start: 0.8, end: 0 },
 				quantity: 5,
 				rotate: { min: 0, max: 360 },
@@ -235,7 +274,7 @@ export class GameScene extends Scene {
 		);
 
 		// Set timer to destroy the emitter
-		this.time.delayedCall(2000, () => {
+		this.time.delayedCall(750, () => {
 			particles.destroy();
 		});
 
