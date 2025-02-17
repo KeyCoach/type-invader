@@ -1,5 +1,5 @@
 import { Scene } from "phaser";
-import { wordPool } from "../constants/wordPool";
+import { wordPool, wordPoolByLetterAndLength } from "../constants/wordPool";
 import { colors, hexadecimalColors } from "../constants/colors";
 
 const MULTIPLIER_THRESHOLDS = {
@@ -24,11 +24,14 @@ const getRequiredCharactersForCurrentLevel = (chars: number): number => {
 };
 
 export class GameScene extends Scene {
+  private mode: "free" | "letter" = "free";
+  private selectedLetter?: string;
+  private wordPool: string[] = [];
+
   private asteroids: Asteroid[] = [];
   private score: number = 0;
   private scoreText!: Phaser.GameObjects.Text;
   private scoreUpdateText!: Phaser.GameObjects.Text;
-  private wordPool: string[] = wordPool;
   private ship!: Phaser.GameObjects.Sprite;
 
   // New properties for multiplier and progress bar
@@ -37,6 +40,20 @@ export class GameScene extends Scene {
   private correctCharacters: number = 0;
   private progressBar!: Phaser.GameObjects.Graphics;
   private progressBarBg!: Phaser.GameObjects.Graphics;
+
+  init(data: { mode: "free" | "letter"; letter?: string }) {
+    this.mode = data.mode;
+    this.selectedLetter = data.letter;
+
+    // Initialize word pool based on mode
+    if (this.mode === "free") {
+      this.wordPool = wordPool; // Use original pool
+    } else if (this.mode === "letter" && this.selectedLetter) {
+      // Combine all word lengths for the selected letter
+      const letterWords = wordPoolByLetterAndLength[this.selectedLetter];
+      this.wordPool = Object.values(letterWords).flat();
+    }
+  }
 
   constructor() {
     super({ key: "GameScene" });
@@ -109,53 +126,55 @@ export class GameScene extends Scene {
   }
 
   private updateProgressBar() {
-        const { width, height } = this.cameras.main;
-        
-        const requiredChars = getRequiredCharactersForCurrentLevel(this.correctCharacters);
-        
-        let levelStartChars = 0;
+    const { width, height } = this.cameras.main;
 
-		// Assigns the width and characters required for the current multiplier level
-        if (this.correctCharacters >= MULTIPLIER_THRESHOLDS[3]) {
-            levelStartChars = MULTIPLIER_THRESHOLDS[3];
-        } else if (this.correctCharacters >= MULTIPLIER_THRESHOLDS[2]) {
-            levelStartChars = MULTIPLIER_THRESHOLDS[2];
-        }
-        
-        const levelProgress = this.correctCharacters - levelStartChars;
-        const progress = Math.min(1, levelProgress / requiredChars);
-        const barWidth = width * progress;
+    const requiredChars = getRequiredCharactersForCurrentLevel(
+      this.correctCharacters
+    );
 
-        this.progressBar.clear();
-        this.progressBar.fillStyle(hexadecimalColors.teal, 0.5);
-        this.progressBar.fillRect(0, height - 6, barWidth, 6);
+    let levelStartChars = 0;
+
+    // Assigns the width and characters required for the current multiplier level
+    if (this.correctCharacters >= MULTIPLIER_THRESHOLDS[3]) {
+      levelStartChars = MULTIPLIER_THRESHOLDS[3];
+    } else if (this.correctCharacters >= MULTIPLIER_THRESHOLDS[2]) {
+      levelStartChars = MULTIPLIER_THRESHOLDS[2];
     }
 
-    private updateMultiplier() {
-        this.correctCharacters++;
+    const levelProgress = this.correctCharacters - levelStartChars;
+    const progress = Math.min(1, levelProgress / requiredChars);
+    const barWidth = width * progress;
 
-        let newMultiplier = 1;
-        if (this.correctCharacters >= MULTIPLIER_THRESHOLDS[4]) {
-            newMultiplier = 4;
-        } else if (this.correctCharacters >= MULTIPLIER_THRESHOLDS[3]) {
-            newMultiplier = 3;
-        } else if (this.correctCharacters >= MULTIPLIER_THRESHOLDS[2]) {
-            newMultiplier = 2;
-        }
+    this.progressBar.clear();
+    this.progressBar.fillStyle(hexadecimalColors.teal, 0.5);
+    this.progressBar.fillRect(0, height - 6, barWidth, 6);
+  }
 
-        if (newMultiplier !== this.multiplier) {
-            this.multiplier = newMultiplier;
-            this.multiplierText.setText(`${this.multiplier}x`);
-            this.tweens.add({
-                targets: this.multiplierText,
-                scale: { from: 1.5, to: 1 },
-                duration: 200,
-                ease: "Bounce",
-            });
-        }
+  private updateMultiplier() {
+    this.correctCharacters++;
 
-        this.updateProgressBar();
+    let newMultiplier = 1;
+    if (this.correctCharacters >= MULTIPLIER_THRESHOLDS[4]) {
+      newMultiplier = 4;
+    } else if (this.correctCharacters >= MULTIPLIER_THRESHOLDS[3]) {
+      newMultiplier = 3;
+    } else if (this.correctCharacters >= MULTIPLIER_THRESHOLDS[2]) {
+      newMultiplier = 2;
     }
+
+    if (newMultiplier !== this.multiplier) {
+      this.multiplier = newMultiplier;
+      this.multiplierText.setText(`${this.multiplier}x`);
+      this.tweens.add({
+        targets: this.multiplierText,
+        scale: { from: 1.5, to: 1 },
+        duration: 200,
+        ease: "Bounce",
+      });
+    }
+
+    this.updateProgressBar();
+  }
 
   private resetMultiplierProgress() {
     this.correctCharacters = 0;

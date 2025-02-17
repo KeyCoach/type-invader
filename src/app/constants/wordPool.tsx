@@ -38,7 +38,7 @@ export const wordPool: string[] = [
     "kneel",
     "cycle",
     "share",
-    "drown",
+    "drown"
 ];
 
 export const wordPoolByLetterAndLength: { [key: string]: {[key: string]: string[]}  } = {
