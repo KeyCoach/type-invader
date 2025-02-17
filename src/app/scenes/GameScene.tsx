@@ -2,12 +2,26 @@ import { Scene } from "phaser";
 import { wordPool } from "../constants/wordPool";
 import { colors, hexadecimalColors } from "../constants/colors";
 
+const MULTIPLIER_THRESHOLDS = {
+    2: 30,
+    3: 75,
+    4: 135
+};
+
+
 interface Asteroid {
   sprite: Phaser.GameObjects.Sprite;
   text: Phaser.GameObjects.Text;
   originalWord: string;
   word: string;
 }
+
+const getRequiredCharactersForCurrentLevel = (chars: number): number => {
+    if (chars < MULTIPLIER_THRESHOLDS[2]) return 30;
+    if (chars < MULTIPLIER_THRESHOLDS[3]) return 45;
+    if (chars < MULTIPLIER_THRESHOLDS[4]) return 60;
+    return 60; // Max level
+};
 
 export class GameScene extends Scene {
   private asteroids: Asteroid[] = [];
@@ -17,7 +31,7 @@ export class GameScene extends Scene {
   private wordPool: string[] = wordPool;
   private ship!: Phaser.GameObjects.Sprite;
 
-  // New multiplier-related properties
+  // New properties for multiplier and progress bar
   private multiplier: number = 1;
   private multiplierText!: Phaser.GameObjects.Text;
   private correctCharacters: number = 0;
@@ -34,7 +48,6 @@ export class GameScene extends Scene {
     const background = this.add.image(width, height / 2, "background");
     this.ship = this.add.sprite(width / 2, height - 50, "ship").setScale(0.75);
 
-    // Score display setup
     const scoreLabel = this.add.text(32, 520, "Score: ", {
       fontSize: "32px",
       fontFamily: "Monospace",
@@ -96,40 +109,53 @@ export class GameScene extends Scene {
   }
 
   private updateProgressBar() {
-    const { width, height } = this.cameras.main;
-    // Calculate progress within the current 30-character segment
-    const segmentProgress = this.correctCharacters % 30;
-    const progress = segmentProgress / 30;
-    const barWidth = width * progress;
+        const { width, height } = this.cameras.main;
+        
+        const requiredChars = getRequiredCharactersForCurrentLevel(this.correctCharacters);
+        
+        let levelStartChars = 0;
 
-    this.progressBar.clear();
-    this.progressBar.fillStyle(0xffa500, 0.5); // Orange color with 0.5 opacity
-    this.progressBar.fillRect(0, height - 10, barWidth, 10);
-  }
+		// Assigns the width and characters required for the current multiplier level
+        if (this.correctCharacters >= MULTIPLIER_THRESHOLDS[3]) {
+            levelStartChars = MULTIPLIER_THRESHOLDS[3];
+        } else if (this.correctCharacters >= MULTIPLIER_THRESHOLDS[2]) {
+            levelStartChars = MULTIPLIER_THRESHOLDS[2];
+        }
+        
+        const levelProgress = this.correctCharacters - levelStartChars;
+        const progress = Math.min(1, levelProgress / requiredChars);
+        const barWidth = width * progress;
 
-  private updateMultiplier() {
-    this.correctCharacters++;
-
-    // Check if we've hit a multiplier threshold
-    if (this.correctCharacters % 30 === 0) {
-      const newMultiplier = Math.min(
-        4,
-        Math.floor(this.correctCharacters / 30) + 1
-      );
-      if (newMultiplier !== this.multiplier) {
-        this.multiplier = newMultiplier;
-        this.multiplierText.setText(`${this.multiplier}x`);
-        this.tweens.add({
-          targets: this.multiplierText,
-          scale: { from: 1.5, to: 1 },
-          duration: 200,
-          ease: "Bounce",
-        });
-      }
+        this.progressBar.clear();
+        this.progressBar.fillStyle(hexadecimalColors.teal, 0.5);
+        this.progressBar.fillRect(0, height - 6, barWidth, 6);
     }
 
-    this.updateProgressBar();
-  }
+    private updateMultiplier() {
+        this.correctCharacters++;
+
+        let newMultiplier = 1;
+        if (this.correctCharacters >= MULTIPLIER_THRESHOLDS[4]) {
+            newMultiplier = 4;
+        } else if (this.correctCharacters >= MULTIPLIER_THRESHOLDS[3]) {
+            newMultiplier = 3;
+        } else if (this.correctCharacters >= MULTIPLIER_THRESHOLDS[2]) {
+            newMultiplier = 2;
+        }
+
+        if (newMultiplier !== this.multiplier) {
+            this.multiplier = newMultiplier;
+            this.multiplierText.setText(`${this.multiplier}x`);
+            this.tweens.add({
+                targets: this.multiplierText,
+                scale: { from: 1.5, to: 1 },
+                duration: 200,
+                ease: "Bounce",
+            });
+        }
+
+        this.updateProgressBar();
+    }
 
   private resetMultiplierProgress() {
     this.correctCharacters = 0;
@@ -139,6 +165,7 @@ export class GameScene extends Scene {
   }
 
   // ask Toph if he wants to adhere to SRP (Single Responsibility Principle) or nah
+  // reply to Styles that I definitely want to adhere to SRP, but I'm prioritizing speed of development, lol
 
   private spawnAsteroid() {
     const x = this.getAsteroidSpawnX();
