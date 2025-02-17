@@ -37,7 +37,8 @@ export class GameOverScene extends Scene {
 
 		restartText.setInteractive();
 		restartText.on("pointerdown", () => {
-			this.scene.start("MenuScene");
+			this.scene.stop("GameOverScene");
+			this.scene.start("MainMenuScene");
 		});
 	}
 }

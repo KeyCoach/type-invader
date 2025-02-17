@@ -33,6 +33,8 @@ export class GameScene extends Scene {
   private scoreText!: Phaser.GameObjects.Text;
   private scoreUpdateText!: Phaser.GameObjects.Text;
   private ship!: Phaser.GameObjects.Sprite;
+  // part of resetting the game 
+  private spawnTimer?: Phaser.Time.TimerEvent;
 
   // New properties for multiplier and progress bar
   private multiplier: number = 1;
@@ -41,9 +43,21 @@ export class GameScene extends Scene {
   private progressBar!: Phaser.GameObjects.Graphics;
   private progressBarBg!: Phaser.GameObjects.Graphics;
 
+  constructor() {
+    super({ key: "GameScene" });
+  }
+
   init(data: { mode: "free" | "letter"; letter?: string }) {
+	// Reset all game state
     this.mode = data.mode;
     this.selectedLetter = data.letter;
+	this.score = 0;
+    this.multiplier = 1;
+    this.correctCharacters = 0;
+    this.asteroids = [];
+
+	// Clear any existing game objects
+    this.cleanupGameObjects();
 
     // Initialize word pool based on mode
     if (this.mode === "free") {
@@ -55,8 +69,22 @@ export class GameScene extends Scene {
     }
   }
 
-  constructor() {
-    super({ key: "GameScene" });
+  private cleanupGameObjects() {
+    // Stop the spawn timer if it exists
+    if (this.spawnTimer) {
+      this.spawnTimer.destroy();
+    }
+
+    // Clear any existing asteroids
+    this.asteroids.forEach(asteroid => {
+      asteroid.sprite.destroy();
+      asteroid.text.destroy();
+    });
+    
+    // Clear any existing particle systems
+    this.children.list
+      .filter(child => child instanceof Phaser.GameObjects.Particles.ParticleEmitter)
+      .forEach(child => child.destroy());
   }
 
   create() {
@@ -102,7 +130,7 @@ export class GameScene extends Scene {
     this.input.keyboard?.on("keydown", this.handleKeyInput, this);
 
     // Start spawning asteroids
-    this.time.addEvent({
+    this.spawnTimer = this.time.addEvent({
       delay: 1000,
       callback: this.spawnAsteroid,
       callbackScope: this,
@@ -439,4 +467,9 @@ export class GameScene extends Scene {
   private gameOver() {
     this.scene.start("GameOverScene", { score: this.score });
   }
+
+	shutdown() {
+		this.cleanupGameObjects();
+		this.input.keyboard?.off("keydown", this.handleKeyInput, this);
+	}
 }

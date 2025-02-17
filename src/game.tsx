@@ -1,5 +1,5 @@
 import { Game, Types } from "phaser";
-import { MainMenuScene } from "./app/scenes/MenuScene";
+import { MainMenuScene } from "./app/scenes/MainMenuScene";
 import { GameScene } from "./app/scenes/GameScene";
 import { GameOverScene } from "./app/scenes/GameOverScene";
 import {ModeSelectScene} from "./app/scenes/ModeSelectScene";
