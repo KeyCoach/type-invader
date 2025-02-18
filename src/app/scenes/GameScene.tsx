@@ -118,6 +118,7 @@ export class GameScene extends Scene {
     });
 
     // this way the asteroids fall behind the text instead of in front
+    scoreLabel.depth = 2
     this.scoreText.setDepth(2);
     this.multiplierText.setDepth(2);
 
