@@ -117,6 +117,10 @@ export class GameScene extends Scene {
       color: colors.yellow,
     });
 
+    // this way the asteroids fall behind the text instead of in front
+    this.scoreText.setDepth(2);
+    this.multiplierText.setDepth(2);
+
     // Create progress bar background
     this.progressBarBg = this.add.graphics();
     this.progressBarBg.fillStyle(0x666666, 0.3);
@@ -211,18 +215,21 @@ export class GameScene extends Scene {
     this.updateProgressBar();
   }
 
-  // ask Toph if he wants to adhere to SRP (Single Responsibility Principle) or nah
-  // reply to Styles that I definitely want to adhere to SRP, but I'm prioritizing speed of development, lol
-
   private spawnAsteroid() {
     const x = this.getAsteroidSpawnX();
     const word = this.getAsteroidWord();
     const originalWord = word;
-    const scale = Phaser.Math.Between(50, 100) / 100;
 
-    const sprite = this.createAsteroidSprite(x, scale);
+	// Create the text object first to calc its width
     const text = this.createAsteroidText(x, word);
 
+	// use text.width instead of scale to make dynamic sprites
+    const sprite = this.createAsteroidSprite(x, text.width);
+
+	// Ensure the text appears on top of the sprite
+	text.setDepth(1); // Higher depth than the sprite
+	sprite.setDepth(0); // Base depth for the sprite
+    
     this.asteroids.push({ sprite, text, word, originalWord });
   }
 
@@ -264,11 +271,18 @@ export class GameScene extends Scene {
       : this.wordPool[Phaser.Math.Between(0, this.wordPool.length - 1)];
   }
 
+  // updated to base the scale of the sprite on the width of the word 
   private createAsteroidSprite(
     x: number,
-    scale: number
+    wordWidth: number
   ): Phaser.GameObjects.Sprite {
-    const sprite = this.add.sprite(x, -50, "asteroid").setScale(scale);
+    const sprite = this.add.sprite(x, -50, "asteroid")
+
+	const baseSize = 80; // Base size for the asteroid
+	const padding = 7; // Additional size to ensure sprite is bigger than text
+	const scale = (wordWidth + padding) / baseSize;
+	sprite.setScale(scale);
+
     sprite.angle = Phaser.Math.Between(0, 360);
 
     const spinSpeed = Phaser.Math.Between(2000, 4000);
@@ -284,13 +298,18 @@ export class GameScene extends Scene {
     return sprite;
   }
 
-  private createAsteroidText(x: number, word: string): Phaser.GameObjects.Text {
-    return this.add
+  private createAsteroidText(
+	x: number, 
+	word: string
+  ): Phaser.GameObjects.Text {
+    const text = this.add
       .text(x, -50, word, {
         fontSize: "20px",
-        color: colors.white,
+        color: colors.white
       })
       .setOrigin(0.5);
+
+	  return text
   }
 
   private shootMissile(targetX: number, targetY: number) {
