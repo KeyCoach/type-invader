@@ -1,5 +1,6 @@
 import { Scene } from "phaser";
 import { wordPool, wordPoolByLetterAndLength } from "../constants/wordPool";
+import { fetchWordsByLetterAndLength, extractWords } from "../constants/words-api";
 import { colors, hexadecimalColors } from "../constants/colors";
 
 const MULTIPLIER_THRESHOLDS = {
@@ -23,10 +24,12 @@ const getRequiredCharactersForCurrentLevel = (chars: number): number => {
     return 60; // Max level
 };
 
+
 export class GameScene extends Scene {
   private mode: "free" | "letter" = "free";
   private selectedLetter?: string;
   private wordPool: string[] = [];
+  private length: number = 6; // need to figure out how to determine this -- for now just hardcoding the value
 
   private asteroids: Asteroid[] = [];
   private score: number = 0;
@@ -47,14 +50,25 @@ export class GameScene extends Scene {
     super({ key: "GameScene" });
   }
 
+  private async loadWordsForLevel(letter: string, length: number): Promise<string[]> {
+    try {
+      const apiResponse = await fetchWordsByLetterAndLength(letter, length);
+      return extractWords(apiResponse);
+    } catch (error) {
+      console.error("Error loading words for level:", error);
+      return [];
+    }
+  }
+
   init(data: { mode: "free" | "letter"; letter?: string }) {
 	// Reset all game state
     this.mode = data.mode;
     this.selectedLetter = data.letter;
-	this.score = 0;
+	  this.score = 0;
     this.multiplier = 1;
     this.correctCharacters = 0;
     this.asteroids = [];
+
 
 	// Clear any existing game objects
     this.cleanupGameObjects();
@@ -63,9 +77,9 @@ export class GameScene extends Scene {
     if (this.mode === "free") {
       this.wordPool = wordPool; // Use original pool
     } else if (this.mode === "letter" && this.selectedLetter) {
-      // Combine all word lengths for the selected letter
-      const letterWords = wordPoolByLetterAndLength[this.selectedLetter];
-      this.wordPool = Object.values(letterWords).flat();
+
+      // Initialize word pool with a placeholder which is filled in create()
+      this.wordPool = [];
     }
   }
 
@@ -87,18 +101,18 @@ export class GameScene extends Scene {
       .forEach(child => child.destroy());
   }
 
-  create() {
+  async create() {
     const { width, height } = this.cameras.main;
-
+  
     const background = this.add.image(width, height / 2, "background");
     this.ship = this.add.sprite(width / 2, height - 50, "ship").setScale(0.75);
-
+  
     const scoreLabel = this.add.text(32, 520, "Score: ", {
       fontSize: "32px",
       fontFamily: "Monospace",
       color: colors.red,
     });
-
+  
     this.scoreText = this.add.text(
       scoreLabel.x + scoreLabel.width - 2,
       520,
@@ -109,31 +123,35 @@ export class GameScene extends Scene {
         color: colors.white,
       }
     );
-
-    // Add multiplier text above score
+  
     this.multiplierText = this.add.text(32, 485, "1x", {
       fontSize: "24px",
       fontFamily: "Monospace",
       color: colors.yellow,
     });
-
-    // this way the asteroids fall behind the text instead of in front
-    scoreLabel.depth = 2
+  
+    scoreLabel.setDepth(2);
     this.scoreText.setDepth(2);
     this.multiplierText.setDepth(2);
-
-    // Create progress bar background
+  
+    // Progress bar setup
     this.progressBarBg = this.add.graphics();
     this.progressBarBg.fillStyle(0x666666, 0.3);
     this.progressBarBg.fillRect(0, height - 10, width, 10);
-
-    // Create progress bar
+  
     this.progressBar = this.add.graphics();
     this.updateProgressBar();
-
+  
     // Set up keyboard input
     this.input.keyboard?.on("keydown", this.handleKeyInput, this);
-
+  
+    // Fetch words for letter mode
+    if (this.mode === "letter" && this.selectedLetter) {
+      this.wordPool = await this.loadWordsForLevel(this.selectedLetter, this.length);
+    } else {
+      this.wordPool = wordPool; // Default word pool for free mode
+    }
+  
     // Start spawning asteroids
     this.spawnTimer = this.time.addEvent({
       delay: 1000,
@@ -142,6 +160,7 @@ export class GameScene extends Scene {
       loop: true,
     });
   }
+  
 
   update() {
     // Update asteroid positions and check for game over
