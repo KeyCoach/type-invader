@@ -29,7 +29,7 @@ export class GameScene extends Scene {
   private mode: "free" | "letter" = "free";
   private selectedLetter?: string;
   private wordPool: string[] = [];
-  private length: number = 6; // need to figure out how to determine this -- for now just hardcoding the value
+  private length: number = 4; // need to figure out how to determine this -- for now just hardcoding the value
 
   private asteroids: Asteroid[] = [];
   private score: number = 0;
@@ -198,12 +198,16 @@ export class GameScene extends Scene {
   }
 
   private showLevelText() {
-    // Fade in the level text
+    if (!this.levelText) {
+        console.error("Level text object is not initialized");
+        return;
+    }
+
     this.levelText.setText(`Level ${this.level}`).setAlpha(1);
     this.tweens.add({
-      targets: this.levelText,
-      alpha: 0,
-      duration: 2000, // Fades out after 2 seconds
+        targets: this.levelText,
+        alpha: 0,
+        duration: 2000, // Fades out over 2 seconds before next level begins
     });
   }
 
@@ -229,51 +233,58 @@ export class GameScene extends Scene {
   private advanceToNextLevel() {
     this.level += 1; // Increment the level
     this.showLevelText(); // Display the new level
-    this.increaseDifficulty(); // Adjust game difficulty
-    this.startLevelTimer(); // Restart the timer
+
+    // Destroy existing asteroids before next level
+    this.clearAsteroids();
+
+    // Pause game for a moment before new level starts
+    this.time.delayedCall(3000, () => {
+    this.increaseDifficulty(); // Adjust difficulty
+    this.startLevelTimer(); // Restart level timer
+    this.spawnAsteroids(); // Restart asteroid spawning
+    });
+  }
+
+  private clearAsteroids() {
+    // Destroy all existing asteroids when a new level starts
+    this.asteroids.forEach(asteroid => {
+        asteroid.sprite.destroy();
+        asteroid.text.destroy();
+    });
+
+    this.asteroids = []; // Clear the list
   }
 
   private increaseDifficulty() {
     // Increase asteroid speed
-    this.asteroidSpeed += 0.5;
+    this.asteroidSpeed = 1 + (this.level - 1) * 0.2; // Starts at 1 and increases
 
     // Increase word length after every few levels
     if (this.level % 3 === 0 && this.length < 10) {
       this.length += 1; // Increase word length cap
     }
-
-    // Decrease spawn timer delay for higher levels
-    if (this.spawnTimer) {
-      this.spawnTimer.destroy(); // Stop the current timer
-    }
-    this.spawnAsteroids(); // Restart with updated settings
   }
 
   private spawnAsteroids() {
-    // Adjust spawn rate based on level
-    let spawnRate = 1000; // Default spawn rate (1 second)
-  
-    if (this.level === 1) {
-      spawnRate = 2000; // Slower spawn rate for level 1 (2 seconds)
-    } else {
-      spawnRate = Math.max(500, 1000 - this.level * 50); // Increase spawn speed for higher levels
+    let spawnRate = 2000; // Default for level 1 (slower spawn rate)
+
+    if (this.level > 1) {
+        spawnRate = Math.max(800, 2000 - this.level * 100); // Faster spawns
     }
-  
-    // Destroy the existing spawn timer if it exists
+
     if (this.spawnTimer) {
-      this.spawnTimer.destroy();
+        this.spawnTimer.destroy(); // Destroy old timer before creating a new one
     }
-  
-    // Create a new spawn timer with the adjusted spawn rate
+
     this.spawnTimer = this.time.addEvent({
-      delay: spawnRate,
-      callback: () => {
-        if (!this.isPaused) {
-          this.spawnAsteroid();
-        }
-      },
-      callbackScope: this,
-      loop: true,
+        delay: spawnRate,
+        callback: () => {
+            if (!this.isPaused && this.asteroids.length < 5) { 
+                this.spawnAsteroid(); // Limit to 5 asteroids at a time
+            }
+        },
+        callbackScope: this,
+        loop: true,
     });
   }
 
@@ -372,25 +383,20 @@ export class GameScene extends Scene {
   }
 
   private spawnAsteroid() {
-    
-    if (this.level === 1 && this.asteroids.length >= 5) {
-      return; // Do not spawn more than 5 asteroids in level 1
+    if (this.asteroids.length >= 5) {
+        return; // Don't exceed 5 asteroids at a time
     }
 
     const x = this.getAsteroidSpawnX();
     const word = this.getAsteroidWord();
     const originalWord = word;
 
-	  // Create the text object first to calc its width
     const text = this.createAsteroidText(x, word);
-
-	  // use text.width instead of scale to make dynamic sprites
     const sprite = this.createAsteroidSprite(x, text.width);
 
-    // Ensure the text appears on top of the sprite
-    text.setDepth(1); // Higher depth than the sprite
-    sprite.setDepth(0); // Base depth for the sprite
-    
+    sprite.setDepth(1);
+    text.setDepth(2);
+
     this.asteroids.push({ sprite, text, word, originalWord });
   }
 
