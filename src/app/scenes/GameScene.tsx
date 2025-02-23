@@ -29,8 +29,7 @@ export class GameScene extends Scene {
   private mode: "free" | "letter" = "free";
   private selectedLetter?: string;
   private wordPool: string[] = [];
-  private length: number = 6; // need to figure out how to determine this -- for now just hardcoding the value
-
+  private length: number = 5; // need to figure out how to determine this
   private asteroids: Asteroid[] = [];
   private score: number = 0;
   private scoreText!: Phaser.GameObjects.Text;
@@ -38,6 +37,13 @@ export class GameScene extends Scene {
   private ship!: Phaser.GameObjects.Sprite;
   // part of resetting the game 
   private spawnTimer?: Phaser.Time.TimerEvent;
+
+  // props for adding levels
+  private levelText!: Phaser.GameObjects.Text; // New: For displaying the level
+  private timerText!: Phaser.GameObjects.Text; // New: For displaying the countdown timer
+  private level: number = 1; // New: Tracks the current level
+  private timer: number = 5; // New: Tracks remaining time for the level
+  private asteroidSpeed: number = 1; // New: Adjusts asteroid fall speed
 
   // New properties for multiplier and progress bar
   private multiplier: number = 1;
@@ -72,6 +78,8 @@ export class GameScene extends Scene {
     this.correctCharacters = 0;
     this.asteroids = [];
 
+    // 🔥 Ensure the level resets when the game restarts
+    this.level = 1;
 
 	  // Clear any existing game objects
     this.cleanupGameObjects();
@@ -107,7 +115,8 @@ export class GameScene extends Scene {
   async create() {
     const { width, height } = this.cameras.main;
 
-    this.input.keyboard?.on("keydown-ESC", this.togglePause, this);
+    // Ensure timer starts correctly when the game restarts
+    this.timer = 5;
   
     const background = this.add.image(width, height / 2, "background");
     this.ship = this.add.sprite(width / 2, height - 50, "ship").setScale(0.75);
@@ -128,16 +137,39 @@ export class GameScene extends Scene {
         color: colors.white,
       }
     );
-  
+
+    this.levelText = this.add.text(width / 2, height / 2, "", {
+      fontSize: "48px",
+      fontFamily: "Monospace",
+      color: colors.yellow,
+    }).setOrigin(0.5).setAlpha(0); // Start invisible
+
+    this.timerText = this.add.text(width - 110, 520, `00:${String(this.timer).padStart(2, "0")}`, {
+      fontSize: "32px",
+      fontFamily: "Monospace",
+      color: colors.white,
+    });
+
+    // Show the starting level
+    this.showLevelText();
+
+    // Start the level timer
+    this.startLevelTimer();
+
+    // Start spawning asteroids
+    this.spawnAsteroids();
+
     this.multiplierText = this.add.text(32, 485, "1x", {
       fontSize: "24px",
       fontFamily: "Monospace",
       color: colors.yellow,
     });
   
+    // set text above the asteroids
     scoreLabel.setDepth(2);
     this.scoreText.setDepth(2);
     this.multiplierText.setDepth(2);
+    this.timerText.setDepth(2);
   
     // Progress bar setup
     this.progressBarBg = this.add.graphics();
@@ -165,14 +197,116 @@ export class GameScene extends Scene {
       callbackScope: this,
       loop: true,
     });
+
+    this.input.keyboard?.on("keydown-ESC", this.togglePause, this);
   }
-  
+
+  private showLevelText() {
+    if (!this.levelText) {
+        console.error("Level text object is not initialized");
+        return;
+    }
+
+    this.levelText.setText(`Level ${this.level}`).setAlpha(1);
+    this.tweens.add({
+        targets: this.levelText,
+        alpha: 0,
+        duration: 2000, // Fades out over 2 seconds before next level begins
+    });
+  }
+
+  private startLevelTimer() {
+    // Clear any existing timer events before starting a new one
+    this.time.removeAllEvents(); 
+
+    // Reset timer value
+    this.timer = 5;
+
+    // Update UI immediately so it doesn't show "00:00"
+    if (this.timerText) {
+      this.timerText.setText(`00:${String(this.timer).padStart(2, "0")}`);
+    }
+
+    this.time.addEvent({
+      delay: 1000, // Update the timer every second
+      callback: () => {
+        if (!this.isPaused) {
+          this.timer -= 1;
+          this.timerText.setText(`00:${String(this.timer).padStart(2, "0")}`);
+
+          // Check if the level time is over
+          if (this.timer <= 0) {
+            this.advanceToNextLevel();
+          }
+        }
+      },
+      repeat: 4, // Runs for 30 seconds (30 calls total)
+    });
+  }
+
+  private advanceToNextLevel() {
+    this.level += 1; // Increment the level
+    this.showLevelText(); // Display the new level
+
+    // Destroy existing asteroids before next level
+    this.clearAsteroids();
+
+    // Pause game for a moment before new level starts
+    this.time.delayedCall(4000, () => {
+    this.increaseDifficulty(); // Adjust difficulty
+    this.startLevelTimer(); // Restart level timer
+    this.spawnAsteroids(); // Restart asteroid spawning
+    });
+  }
+
+  private clearAsteroids() {
+    // Destroy all existing asteroids when a new level starts
+    this.asteroids.forEach(asteroid => {
+        asteroid.sprite.destroy();
+        asteroid.text.destroy();
+    });
+
+    this.asteroids = []; // Clear the list
+  }
+
+  private increaseDifficulty() {
+    // Increase asteroid speed
+    this.asteroidSpeed = 1 + (this.level - 1) * 0.2; // Starts at 1 and increases
+
+    // Increase word length after every few levels
+    if (this.level % 3 === 0 && this.length < 10) {
+      this.length += 1; // Increase word length cap
+    }
+  }
+
+  private spawnAsteroids() {
+    let spawnRate = 2000; // Default for level 1 (slower spawn rate)
+
+    if (this.level > 1) {
+        spawnRate = Math.max(800, 2000 - this.level * 100); // Faster spawns
+    }
+
+    if (this.spawnTimer) {
+        this.spawnTimer.destroy(); // Destroy old timer before creating a new one
+    }
+
+    this.spawnTimer = this.time.addEvent({
+        delay: spawnRate,
+        callback: () => {
+            if (!this.isPaused && this.asteroids.length < 5) { 
+                this.spawnAsteroid(); // Limit to 5 asteroids at a time
+            }
+        },
+        callbackScope: this,
+        loop: true,
+    });
+  }
 
   update() {
     // Update asteroid positions and check for game over
     for (let i = this.asteroids.length - 1; i >= 0; i--) {
       const asteroid = this.asteroids[i];
-      asteroid.sprite.y += 1; // Adjust speed as needed
+      asteroid.sprite.y += this.asteroidSpeed; // Adjust speed as needed
       asteroid.text.y = asteroid.sprite.y;
 
       // Check if asteroid reached bottom
@@ -201,6 +335,9 @@ export class GameScene extends Scene {
 				this.spawnTimer.paused = false;
 			}
 			this.scene.stop("PauseScene");
+
+      // Resume the countdown timer if it was paused
+      this.startLevelTimer();
 		}
 	}
 
@@ -263,20 +400,20 @@ export class GameScene extends Scene {
   }
 
   private spawnAsteroid() {
+    if (this.asteroids.length >= 5) {
+        return; // Don't exceed 5 asteroids at a time
+    }
+
     const x = this.getAsteroidSpawnX();
     const word = this.getAsteroidWord();
     const originalWord = word;
 
-	  // Create the text object first to calc its width
     const text = this.createAsteroidText(x, word);
-
-	  // use text.width instead of scale to make dynamic sprites
     const sprite = this.createAsteroidSprite(x, text.width);
 
-    // Ensure the text appears on top of the sprite
-    text.setDepth(1); // Higher depth than the sprite
-    sprite.setDepth(0); // Base depth for the sprite
-    
+    sprite.setDepth(1);
+    text.setDepth(2);
+
     this.asteroids.push({ sprite, text, word, originalWord });
   }
 
@@ -539,5 +676,11 @@ export class GameScene extends Scene {
 		this.input.keyboard?.off("keydown", this.handleKeyInput, this);
     this.input.keyboard?.off("keydown-ESC", this.togglePause, this);
 		this.scene.stop("PauseScene");
+
+    // Reset and restart timers properly
+    if (this.spawnTimer) {
+      this.spawnTimer.destroy();
+      this.spawnTimer = undefined;
+    }
 	}
 }
