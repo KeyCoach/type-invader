@@ -29,8 +29,7 @@ export class GameScene extends Scene {
   private mode: "free" | "letter" = "free";
   private selectedLetter?: string;
   private wordPool: string[] = [];
-  private length: number = 4; // need to figure out how to determine this -- for now just hardcoding the value
-
+  private length: number = 5; // need to figure out how to determine this
   private asteroids: Asteroid[] = [];
   private score: number = 0;
   private scoreText!: Phaser.GameObjects.Text;
@@ -43,7 +42,7 @@ export class GameScene extends Scene {
   private levelText!: Phaser.GameObjects.Text; // New: For displaying the level
   private timerText!: Phaser.GameObjects.Text; // New: For displaying the countdown timer
   private level: number = 1; // New: Tracks the current level
-  private timer: number = 30; // New: Tracks remaining time for the level
+  private timer: number = 5; // New: Tracks remaining time for the level
   private asteroidSpeed: number = 1; // New: Adjusts asteroid fall speed
 
   // New properties for multiplier and progress bar
@@ -79,6 +78,8 @@ export class GameScene extends Scene {
     this.correctCharacters = 0;
     this.asteroids = [];
 
+    // 🔥 Ensure the level resets when the game restarts
+    this.level = 1;
 
 	  // Clear any existing game objects
     this.cleanupGameObjects();
@@ -113,6 +114,9 @@ export class GameScene extends Scene {
 
   async create() {
     const { width, height } = this.cameras.main;
+
+    // Ensure timer starts correctly when the game restarts
+    this.timer = 5;
   
     const background = this.add.image(width, height / 2, "background");
     this.ship = this.add.sprite(width / 2, height - 50, "ship").setScale(0.75);
@@ -140,7 +144,7 @@ export class GameScene extends Scene {
       color: colors.yellow,
     }).setOrigin(0.5).setAlpha(0); // Start invisible
 
-    this.timerText = this.add.text(width - 110, 520, `00:${this.timer}`, {
+    this.timerText = this.add.text(width - 110, 520, `00:${String(this.timer).padStart(2, "0")}`, {
       fontSize: "32px",
       fontFamily: "Monospace",
       color: colors.white,
@@ -149,11 +153,11 @@ export class GameScene extends Scene {
     // Show the starting level
     this.showLevelText();
 
-    // Start spawning asteroids
-    this.spawnAsteroids();
-
     // Start the level timer
     this.startLevelTimer();
+
+    // Start spawning asteroids
+    this.spawnAsteroids();
 
     this.multiplierText = this.add.text(32, 485, "1x", {
       fontSize: "24px",
@@ -212,13 +216,23 @@ export class GameScene extends Scene {
   }
 
   private startLevelTimer() {
-    this.timer = 30; // Reset the timer for each level
+    // Clear any existing timer events before starting a new one
+    this.time.removeAllEvents(); 
+
+    // Reset timer value
+    this.timer = 5;
+
+    // Update UI immediately so it doesn't show "00:00"
+    if (this.timerText) {
+      this.timerText.setText(`00:${String(this.timer).padStart(2, "0")}`);
+    }
+
     this.time.addEvent({
       delay: 1000, // Update the timer every second
       callback: () => {
         if (!this.isPaused) {
           this.timer -= 1;
-          this.timerText.setText(`00:${this.timer}`);
+          this.timerText.setText(`00:${String(this.timer).padStart(2, "0")}`);
 
           // Check if the level time is over
           if (this.timer <= 0) {
@@ -226,7 +240,7 @@ export class GameScene extends Scene {
           }
         }
       },
-      repeat: 29, // Runs for 30 seconds (30 calls total)
+      repeat: 4, // Runs for 30 seconds (30 calls total)
     });
   }
 
@@ -238,7 +252,7 @@ export class GameScene extends Scene {
     this.clearAsteroids();
 
     // Pause game for a moment before new level starts
-    this.time.delayedCall(3000, () => {
+    this.time.delayedCall(4000, () => {
     this.increaseDifficulty(); // Adjust difficulty
     this.startLevelTimer(); // Restart level timer
     this.spawnAsteroids(); // Restart asteroid spawning
@@ -321,6 +335,9 @@ export class GameScene extends Scene {
 				this.spawnTimer.paused = false;
 			}
 			this.scene.stop("PauseScene");
+
+      // Resume the countdown timer if it was paused
+      this.startLevelTimer();
 		}
 	}
 
@@ -659,5 +676,11 @@ export class GameScene extends Scene {
 		this.input.keyboard?.off("keydown", this.handleKeyInput, this);
     this.input.keyboard?.off("keydown-ESC", this.togglePause, this);
 		this.scene.stop("PauseScene");
+
+    // Reset and restart timers properly
+    if (this.spawnTimer) {
+      this.spawnTimer.destroy();
+      this.spawnTimer = undefined;
+    }
 	}
 }
