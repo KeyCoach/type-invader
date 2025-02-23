@@ -32,14 +32,35 @@ export class MainMenuScene extends Scene {
 		// Initialize keyboard navigation
 		this.navigation = new KeyboardNavigation(this).init();
 
+		// Create container background with alpha
+		const horizontalPadding = 80;
+		const verticalPadding = 40;
+		const menuHeight = 250; // Adjust based on content
+		const menuWidth = 400; // Adjust based on content
+
+		const menuBackground = this.add.graphics();
+		menuBackground.fillStyle(0x282c34, 0.8);
+		menuBackground.fillRoundedRect(
+			width / 2 - (menuWidth + horizontalPadding * 2) / 2, // x position
+			height / 2 - (menuHeight + verticalPadding * 2) / 2, // y position
+			menuWidth + horizontalPadding * 2, // width
+			menuHeight + verticalPadding * 2, // height
+			20 // corner radius
+		);
+		menuBackground.setDepth(1);
+
+		// Set depth for menu container and all menu elements
+		menuBackground.setDepth(1);
+
 		// Title
 		this.add
-			.text(width / 2, height / 3, "Typing Asteroids", {
+			.text(width / 2, height / 2 - 80, "Typing Asteroids", {
 				fontSize: "48px",
 				fontFamily: "Monospace",
 				color: colors.white,
 			})
-			.setOrigin(0.5);
+			.setOrigin(0.5)
+			.setDepth(1);
 
 		// Play button
 		const playButton = this.add
@@ -49,6 +70,7 @@ export class MainMenuScene extends Scene {
 				color: colors.green,
 			})
 			.setOrigin(0.5)
+			.setDepth(1)
 			.setInteractive({ useHandCursor: true })
 			.on("pointerover", () => playButton.setColor(colors.yellow))
 			.on("pointerout", () => playButton.setColor(colors.green))
@@ -62,6 +84,7 @@ export class MainMenuScene extends Scene {
 				color: colors.green,
 			})
 			.setOrigin(0.5)
+			.setDepth(1)
 			.setInteractive({ useHandCursor: true })
 			.on("pointerover", () => settingsButton.setColor(colors.yellow))
 			.on("pointerout", () => settingsButton.setColor(colors.green))
@@ -93,7 +116,8 @@ export class MainMenuScene extends Scene {
 					color: colors.white,
 				}
 			)
-			.setOrigin(0.5);
+			.setOrigin(0.5)
+			.setDepth(1);
 
 		// Initialize shooting star system
 		this.nextStarTime = this.time.now + Phaser.Math.Between(500, 2000);
@@ -115,13 +139,15 @@ export class MainMenuScene extends Scene {
 		const startY = -20;
 
 		// Create the star using an ellipse
-		const star = this.add.ellipse(
-			startX,
-			startY,
-			3, // width
-			12, // height
-			hexadecimalColors.white
-		);
+		const star = this.add
+			.ellipse(
+				startX,
+				startY,
+				3, // width
+				12, // height
+				hexadecimalColors.white
+			)
+			.setDepth(0); // Ensure stars are behind menu
 
 		// Calculate random endpoint
 		const endX = startX + Phaser.Math.Between(-200, 200);
@@ -132,15 +158,17 @@ export class MainMenuScene extends Scene {
 		star.rotation = angle - Math.PI / 2;
 
 		// Create particle trail
-		const particles = this.add.particles(startX, startY, "particle", {
-			speed: { min: 10, max: 20 },
-			scale: { start: 0.2, end: 0 },
-			alpha: { start: 0.5, end: 0 },
-			lifespan: 1000,
-			blendMode: "ADD",
-			frequency: 50,
-			follow: star,
-		});
+		const particles = this.add
+			.particles(startX, startY, "particle", {
+				speed: { min: 10, max: 20 },
+				scale: { start: 0.2, end: 0 },
+				alpha: { start: 0.5, end: 0 },
+				lifespan: 1000,
+				blendMode: "ADD",
+				frequency: 50,
+				follow: star,
+			})
+			.setDepth(0); // Ensure particles are behind menu
 
 		// Animate the star
 		this.tweens.add({
