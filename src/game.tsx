@@ -5,6 +5,7 @@ import { GameOverScene } from "./app/scenes/GameOverScene";
 import { ModeSelectScene } from "./app/scenes/ModeSelectScene";
 import { LetterSelectScene } from "./app/scenes/LetterSelectScene";
 import { PauseScene } from "./app/scenes/PauseScene";
+import { SettingsScene } from "./app/scenes/SettingsScene";
 
 export const gameConfig: Types.Core.GameConfig = {
 	type: Phaser.AUTO,
@@ -27,6 +28,7 @@ export const gameConfig: Types.Core.GameConfig = {
 		GameScene,
 		GameOverScene,
 		PauseScene,
+		SettingsScene
 	],
 };
 
