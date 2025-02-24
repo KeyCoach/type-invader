@@ -42,7 +42,7 @@ export class GameScene extends Scene {
   private levelText!: Phaser.GameObjects.Text; // New: For displaying the level
   private timerText!: Phaser.GameObjects.Text; // New: For displaying the countdown timer
   private level: number = 1; // New: Tracks the current level
-  private timer: number = 5; // New: Tracks remaining time for the level
+  private timer: number = 30; // New: Tracks remaining time for the level
   private asteroidSpeed: number = 1; // New: Adjusts asteroid fall speed
 
   // New properties for multiplier and progress bar
@@ -116,7 +116,7 @@ export class GameScene extends Scene {
     const { width, height } = this.cameras.main;
 
     // Ensure timer starts correctly when the game restarts
-    this.timer = 5;
+    this.timer = 30;
   
     const background = this.add.image(width, height / 2, "background");
     this.ship = this.add.sprite(width / 2, height - 50, "ship").setScale(0.75);
@@ -220,7 +220,7 @@ export class GameScene extends Scene {
     this.time.removeAllEvents(); 
 
     // Reset timer value
-    this.timer = 5;
+    this.timer = 30;
 
     // Update UI immediately so it doesn't show "00:00"
     if (this.timerText) {
