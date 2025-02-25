@@ -544,37 +544,49 @@ export class GameScene extends Scene {
   private handleKeyInput(event: KeyboardEvent) {
     const char = event.key.toLowerCase();
 
+    // Ignore ESC key presses (prevent multiplier reset)
+    if (char === "escape") return;
+
+    // Find an asteroid that has already been partially typed
     let targetedAsteroidIndex = this.asteroids.findIndex(
-      (asteroid) => asteroid.word.length < asteroid.originalWord.length
+        (asteroid) => asteroid.word.length < asteroid.originalWord.length
     );
 
+    // If no asteroid is partially typed, find one that starts with the typed character
     if (targetedAsteroidIndex === -1) {
-      targetedAsteroidIndex = this.asteroids.findIndex((asteroid) =>
-        asteroid.word.toLowerCase().startsWith(char)
-      );
+        targetedAsteroidIndex = this.asteroids.findIndex((asteroid) =>
+            asteroid.word.toLowerCase().startsWith(char)
+        );
     }
 
-    if (targetedAsteroidIndex !== -1) {
-      const asteroid = this.asteroids[targetedAsteroidIndex];
-      asteroid.text.setStroke("red", 2);
+    // If no valid asteroid is found, reset the multiplier and return
+    if (targetedAsteroidIndex === -1) {
+        this.resetMultiplierProgress();
+        return;
+    }
 
-      if (asteroid.word.toLowerCase().startsWith(char)) {
+    // Get the targeted asteroid and set the text stroke to red
+    const asteroid = this.asteroids[targetedAsteroidIndex];
+    asteroid.text.setStroke("red", 2);
+
+    // If the typed character matches the asteroid's first letter
+    if (asteroid.word.toLowerCase().startsWith(char)) {
         this.shootMissile(asteroid.sprite.x, asteroid.sprite.y);
         this.updateMultiplier(); // Update multiplier on correct keystroke
 
+        // If only one letter remains, destroy the asteroid
         if (asteroid.word.length === 1) {
-          this.destroyAsteroid(targetedAsteroidIndex);
+            this.destroyAsteroid(targetedAsteroidIndex);
         } else {
-          asteroid.word = asteroid.word.slice(1);
-          asteroid.text.setText(asteroid.word);
+            // Otherwise, remove the first letter and update the text
+            asteroid.word = asteroid.word.slice(1);
+            asteroid.text.setText(asteroid.word);
         }
-      } else {
-        this.resetMultiplierProgress(); // Reset on incorrect keystroke
-      }
     } else {
-      this.resetMultiplierProgress(); // Reset when no asteroid is targeted
+        this.resetMultiplierProgress(); // Reset multiplier on incorrect keystroke
     }
   }
+
 
   private updateScore(wordLength: number) {
     const scoreUpdateX = Phaser.Math.Between(80, 220);
