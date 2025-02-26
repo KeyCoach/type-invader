@@ -1,7 +1,8 @@
 import { Scene } from "phaser";
-import { wordPool } from "../constants/wordPool";
-import { fetchWordsByLetterAndLength, extractWords } from "../constants/words-api";
+// import { wordPool } from "../constants/wordPool";
+import { fetchWordsByLetterAndLength, extractWords, fetchWordsForFreePlay } from "../constants/words-api";
 import { colors, hexadecimalColors } from "../constants/colors";
+import PauseButton from "../../components/PauseButton"
 
 const MULTIPLIER_THRESHOLDS = {
     2: 30,
@@ -62,15 +63,16 @@ export class GameScene extends Scene {
 
   private async loadWordsForLevel(letter: string, length: number): Promise<string[]> {
     try {
-      const apiResponse = await fetchWordsByLetterAndLength(letter, length);
-      return extractWords(apiResponse);
+        // fetchWordsByLetterAndLength already returns string[]
+        return await fetchWordsByLetterAndLength(letter, length);
+        // Don't call extractWords here - it's for processing DatamuseWord[], not string[]
     } catch (error) {
-      console.error("Error loading words for level:", error);
-      return [];
+        console.error("Error loading words for level:", error);
+        return [];
     }
   }
 
-  init(data: { mode: "free" | "letter"; letter?: string }) {
+  async init(data: { mode: "free" | "letter"; letter?: string }) {
     this.mode = data.mode;
     this.selectedLetter = data.letter;
     this.score = 0;
@@ -85,12 +87,18 @@ export class GameScene extends Scene {
     // Clear existing game objects
     this.cleanupGameObjects();
 
-    if (this.mode === "free") {
-        this.wordPool = wordPool;
-    } else if (this.mode === "letter" && this.selectedLetter) {
-        this.wordPool = [];
+    try {
+        if (this.mode === "free") {
+            this.wordPool = await fetchWordsForFreePlay(this.length); // Use this.length
+        } else if (this.mode === "letter" && this.selectedLetter) {
+            this.wordPool = await fetchWordsByLetterAndLength(this.selectedLetter, this.length); // Use this.length
+        }
+    } catch (error) {
+        console.error("Error initializing word pool:", error);
+        this.wordPool = []; // Prevent crashes if API fails
     }
   }
+
 
 
   private cleanupGameObjects() {
@@ -156,11 +164,26 @@ export class GameScene extends Scene {
         color: colors.white,
     });
 
+    // Pause Button
+    new PauseButton(this, 25, 25, this.togglePause.bind(this));
+
     // Show the starting level
     this.showLevelText();
 
     // Start the level timer
     this.startLevelTimer();
+
+    try {
+      if (!this.wordPool.length) {
+          if (this.mode === "free") {
+              this.wordPool = await fetchWordsForFreePlay(this.length); // Use this.length
+          } else if (this.mode === "letter" && this.selectedLetter) {
+              this.wordPool = await fetchWordsByLetterAndLength(this.selectedLetter, this.length); // Use this.length
+          }
+      }
+    } catch (error) {
+        console.error("Error fetching words in create():", error);
+    }
 
     // Start spawning asteroids
     this.spawnAsteroids();
@@ -189,13 +212,6 @@ export class GameScene extends Scene {
 
     // Set up keyboard input
     this.input.keyboard?.on("keydown", this.handleKeyInput, this);
-
-    // Fetch words for letter mode
-    if (this.mode === "letter" && this.selectedLetter) {
-        this.wordPool = await this.loadWordsForLevel(this.selectedLetter, this.length);
-    } else {
-        this.wordPool = wordPool; // Default word pool for free mode
-    }
 
     // Restart asteroid spawning timer
     if (this.spawnTimer) {
@@ -329,40 +345,21 @@ export class GameScene extends Scene {
     this.isPaused = !this.isPaused;
 
     if (this.isPaused) {
-        // Pause physics-based movement
         this.physics.world.isPaused = true;
-
-        // Pause asteroid spawning
         if (this.spawnTimer) this.spawnTimer.paused = true;
-
-        // Pause all Phaser timers
         this.time.paused = true;
-
-        // Pause all animations (asteroid spinning, explosions)
         this.tweens.pauseAll();
         this.anims.pauseAll();
-
-        // Launch Pause Scene
         this.scene.launch("PauseScene", { mainScene: this.scene.key });
     } else {
-        // Resume physics-based movement
         this.physics.world.isPaused = false;
-
-        // Resume asteroid spawning
         if (this.spawnTimer) this.spawnTimer.paused = false;
-
-        // Resume all Phaser timers
         this.time.paused = false;
-
-        // Resume all animations
         this.tweens.resumeAll();
         this.anims.resumeAll();
-
-        // Close Pause Scene
         this.scene.stop("PauseScene");
     }
   }
-
 
   private updateProgressBar() {
     const { width, height } = this.cameras.main;
@@ -480,19 +477,62 @@ export class GameScene extends Scene {
   }
 
   private getAsteroidWord(): string {
+    // Early check for empty word pool
+    if (!this.wordPool || this.wordPool.length === 0) {
+      console.warn("Word pool is empty! Attempting to refill...");
+      // Try to refill the word pool asynchronously
+      this.refillWordPool();
+      // Return a generic word as fallback
+      return ["asteroid", "meteor", "comet", "planet", "galaxy"][Math.floor(Math.random() * 5)];
+    }
+  
+    // Get current letters in use to avoid duplicates
     const currentStartLetters = this.asteroids.map((asteroid) =>
       asteroid.word.charAt(0).toLowerCase()
     );
-
-    const availablePhrases = this.wordPool.filter(
+  
+    // Try to find words that don't start with same letters as current asteroids
+    let availablePhrases = this.wordPool.filter(
       (phrase) =>
         !currentStartLetters.includes(phrase.charAt(0).toLowerCase()) &&
         !this.asteroids.some((asteroid) => asteroid.word === phrase)
     );
-
-    return availablePhrases.length > 0
-      ? availablePhrases[Phaser.Math.Between(0, availablePhrases.length - 1)]
-      : this.wordPool[Phaser.Math.Between(0, this.wordPool.length - 1)];
+  
+    // If we couldn't find any words with different starting letters,
+    // just exclude words that are already in use
+    if (availablePhrases.length === 0) {
+      availablePhrases = this.wordPool.filter(
+        (phrase) => !this.asteroids.some((asteroid) => asteroid.word === phrase)
+      );
+    }
+  
+    // If we still have no available words, shuffle the word pool and take any word
+    if (availablePhrases.length === 0) {
+      // Clone and shuffle the word pool
+      const shuffledPool = [...this.wordPool].sort(() => Math.random() - 0.5);
+      return shuffledPool[0];
+    }
+  
+    // Pick a random word from available phrases
+    return availablePhrases[Math.floor(Math.random() * availablePhrases.length)];
+  }
+  
+  // Add this helper method to refill the word pool when it's depleted
+  private async refillWordPool() {
+    try {
+      if (this.mode === "free") {
+        const newWords = await fetchWordsForFreePlay(this.length);
+        // Add new words but avoid duplicates
+        this.wordPool = [...new Set([...this.wordPool, ...newWords])];
+      } else if (this.mode === "letter" && this.selectedLetter) {
+        const newWords = await fetchWordsByLetterAndLength(this.selectedLetter, this.length);
+        // Add new words but avoid duplicates
+        this.wordPool = [...new Set([...this.wordPool, ...newWords])];
+      }
+      console.log(`Refilled word pool. New size: ${this.wordPool.length}`);
+    } catch (error) {
+      console.error("Failed to refill word pool:", error);
+    }
   }
 
   // updated to base the scale of the sprite on the width of the word 
