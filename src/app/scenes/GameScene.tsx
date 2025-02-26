@@ -1,7 +1,8 @@
 import { Scene } from "phaser";
-import { wordPool, wordPoolByLetterAndLength } from "../constants/wordPool";
-import { fetchWordsByLetterAndLength, extractWords } from "../constants/words-api";
+// import { wordPool } from "../constants/wordPool";
+import { fetchWordsByLetterAndLength, extractWords, fetchWordsForFreePlay } from "../constants/words-api";
 import { colors, hexadecimalColors } from "../constants/colors";
+import PauseButton from "../../components/PauseButton"
 
 const MULTIPLIER_THRESHOLDS = {
     2: 30,
@@ -45,15 +46,16 @@ export class GameScene extends Scene {
   private timer: number = 30; // New: Tracks remaining time for the level
   private asteroidSpeed: number = 1; // New: Adjusts asteroid fall speed
 
-  // New properties for multiplier and progress bar
+  // properties for multiplier and progress bar
   private multiplier: number = 1;
   private multiplierText!: Phaser.GameObjects.Text;
   private correctCharacters: number = 0;
   private progressBar!: Phaser.GameObjects.Graphics;
   private progressBarBg!: Phaser.GameObjects.Graphics;
 
-  // New property for pausing the game
+  // props for pausing and advancing levels
 	private isPaused: boolean = false;
+  private isAdvancingLevel: boolean = false;
 
   constructor() {
     super({ key: "GameScene" });
@@ -61,38 +63,43 @@ export class GameScene extends Scene {
 
   private async loadWordsForLevel(letter: string, length: number): Promise<string[]> {
     try {
-      const apiResponse = await fetchWordsByLetterAndLength(letter, length);
-      return extractWords(apiResponse);
+        // fetchWordsByLetterAndLength already returns string[]
+        return await fetchWordsByLetterAndLength(letter, length);
+        // Don't call extractWords here - it's for processing DatamuseWord[], not string[]
     } catch (error) {
-      console.error("Error loading words for level:", error);
-      return [];
+        console.error("Error loading words for level:", error);
+        return [];
     }
   }
 
-  init(data: { mode: "free" | "letter"; letter?: string }) {
-	// Reset all game state
+  async init(data: { mode: "free" | "letter"; letter?: string }) {
     this.mode = data.mode;
     this.selectedLetter = data.letter;
-	  this.score = 0;
+    this.score = 0;
     this.multiplier = 1;
     this.correctCharacters = 0;
     this.asteroids = [];
 
-    // 🔥 Ensure the level resets when the game restarts
+    // Reset the level and pause state
     this.level = 1;
+    this.isPaused = false; // Ensure game is not paused when restarting
 
-	  // Clear any existing game objects
+    // Clear existing game objects
     this.cleanupGameObjects();
 
-    // Initialize word pool based on mode
-    if (this.mode === "free") {
-      this.wordPool = wordPool; // Use original pool
-    } else if (this.mode === "letter" && this.selectedLetter) {
-
-      // Initialize word pool with a placeholder which is filled in create()
-      this.wordPool = [];
+    try {
+        if (this.mode === "free") {
+            this.wordPool = await fetchWordsForFreePlay(this.length); // Use this.length
+        } else if (this.mode === "letter" && this.selectedLetter) {
+            this.wordPool = await fetchWordsByLetterAndLength(this.selectedLetter, this.length); // Use this.length
+        }
+    } catch (error) {
+        console.error("Error initializing word pool:", error);
+        this.wordPool = []; // Prevent crashes if API fails
     }
   }
+
+
 
   private cleanupGameObjects() {
     // Stop the spawn timer if it exists
@@ -115,40 +122,50 @@ export class GameScene extends Scene {
   async create() {
     const { width, height } = this.cameras.main;
 
+    // Ensure the game is not paused when restarting
+    this.isPaused = false;
+
     // Ensure timer starts correctly when the game restarts
     this.timer = 30;
-  
+
+    // Background and ship
     const background = this.add.image(width, height / 2, "background");
     this.ship = this.add.sprite(width / 2, height - 50, "ship").setScale(0.75);
-  
+
+    // Score UI
     const scoreLabel = this.add.text(32, 520, "Score: ", {
-      fontSize: "32px",
-      fontFamily: "Monospace",
-      color: colors.red,
+        fontSize: "32px",
+        fontFamily: "Monospace",
+        color: colors.red,
     });
-  
+
     this.scoreText = this.add.text(
-      scoreLabel.x + scoreLabel.width - 2,
-      520,
-      "0",
-      {
+        scoreLabel.x + scoreLabel.width - 2,
+        520,
+        "0",
+        {
+            fontSize: "32px",
+            fontFamily: "Monospace",
+            color: colors.white,
+        }
+    );
+
+    // Level UI
+    this.levelText = this.add.text(width / 2, height / 2, "", {
+        fontSize: "48px",
+        fontFamily: "Monospace",
+        color: colors.yellow,
+    }).setOrigin(0.5).setAlpha(0);
+
+    // Timer UI
+    this.timerText = this.add.text(width - 110, 520, `00:${String(this.timer).padStart(2, "0")}`, {
         fontSize: "32px",
         fontFamily: "Monospace",
         color: colors.white,
-      }
-    );
-
-    this.levelText = this.add.text(width / 2, height / 2, "", {
-      fontSize: "48px",
-      fontFamily: "Monospace",
-      color: colors.yellow,
-    }).setOrigin(0.5).setAlpha(0); // Start invisible
-
-    this.timerText = this.add.text(width - 110, 520, `00:${String(this.timer).padStart(2, "0")}`, {
-      fontSize: "32px",
-      fontFamily: "Monospace",
-      color: colors.white,
     });
+
+    // Pause Button
+    new PauseButton(this, 25, 25, this.togglePause.bind(this));
 
     // Show the starting level
     this.showLevelText();
@@ -156,48 +173,58 @@ export class GameScene extends Scene {
     // Start the level timer
     this.startLevelTimer();
 
+    try {
+      if (!this.wordPool.length) {
+          if (this.mode === "free") {
+              this.wordPool = await fetchWordsForFreePlay(this.length); // Use this.length
+          } else if (this.mode === "letter" && this.selectedLetter) {
+              this.wordPool = await fetchWordsByLetterAndLength(this.selectedLetter, this.length); // Use this.length
+          }
+      }
+    } catch (error) {
+        console.error("Error fetching words in create():", error);
+    }
+
     // Start spawning asteroids
     this.spawnAsteroids();
 
+    // Multiplier UI
     this.multiplierText = this.add.text(32, 485, "1x", {
-      fontSize: "24px",
-      fontFamily: "Monospace",
-      color: colors.yellow,
+        fontSize: "24px",
+        fontFamily: "Monospace",
+        color: colors.yellow,
     });
-  
-    // set text above the asteroids
+
+    // Set UI elements above asteroids
     scoreLabel.setDepth(2);
     this.scoreText.setDepth(2);
     this.multiplierText.setDepth(2);
     this.timerText.setDepth(2);
-  
+
     // Progress bar setup
     this.progressBarBg = this.add.graphics();
     this.progressBarBg.fillStyle(0x666666, 0.3);
     this.progressBarBg.fillRect(0, height - 10, width, 10);
-  
+
     // Create progress bar
     this.progressBar = this.add.graphics();
     this.updateProgressBar();
-  
+
     // Set up keyboard input
     this.input.keyboard?.on("keydown", this.handleKeyInput, this);
-  
-    // Fetch words for letter mode
-    if (this.mode === "letter" && this.selectedLetter) {
-      this.wordPool = await this.loadWordsForLevel(this.selectedLetter, this.length);
-    } else {
-      this.wordPool = wordPool; // Default word pool for free mode
+
+    // Restart asteroid spawning timer
+    if (this.spawnTimer) {
+        this.spawnTimer.destroy(); // Ensure the previous timer is cleared
     }
-  
-    // Start spawning asteroids
     this.spawnTimer = this.time.addEvent({
-      delay: 1000,
-      callback: this.spawnAsteroid,
-      callbackScope: this,
-      loop: true,
+        delay: 1000,
+        callback: this.spawnAsteroid,
+        callbackScope: this,
+        loop: true,
     });
 
+    // Ensure ESC key is properly set up to toggle pause
     this.input.keyboard?.on("keydown-ESC", this.togglePause, this);
   }
 
@@ -216,46 +243,43 @@ export class GameScene extends Scene {
   }
 
   private startLevelTimer() {
-    // Clear any existing timer events before starting a new one
-    this.time.removeAllEvents(); 
+    this.time.removeAllEvents(); // Clear previous timers
 
-    // Reset timer value
     this.timer = 30;
-
-    // Update UI immediately so it doesn't show "00:00"
-    if (this.timerText) {
-      this.timerText.setText(`00:${String(this.timer).padStart(2, "0")}`);
-    }
+    this.timerText.setText(`00:${String(this.timer).padStart(2, "0")}`);
 
     this.time.addEvent({
-      delay: 1000, // Update the timer every second
-      callback: () => {
-        if (!this.isPaused) {
-          this.timer -= 1;
-          this.timerText.setText(`00:${String(this.timer).padStart(2, "0")}`);
+        delay: 1000, // 1 second per tick
+        callback: () => {
+            if (!this.isPaused && this.timer > 0) { // Prevents negative numbers
+                this.timer -= 1;
+                this.timerText.setText(`00:${String(this.timer).padStart(2, "0")}`);
 
-          // Check if the level time is over
-          if (this.timer <= 0) {
-            this.advanceToNextLevel();
-          }
-        }
-      },
-      repeat: 4, // Runs for 30 seconds (30 calls total)
+                if (this.timer === 0) { // Triggers only ONCE when timer reaches 0
+                    this.advanceToNextLevel();
+                }
+            }
+        },
+        repeat: 29, // Runs for 30 seconds
     });
   }
 
   private advanceToNextLevel() {
-    this.level += 1; // Increment the level
-    this.showLevelText(); // Display the new level
+    if (this.isAdvancingLevel) return; // Prevents multiple level increments
+    this.isAdvancingLevel = true;
 
-    // Destroy existing asteroids before next level
+    this.level += 1;
+    this.showLevelText();
+
+    // Destroy existing asteroids before the next level starts
     this.clearAsteroids();
 
-    // Pause game for a moment before new level starts
-    this.time.delayedCall(4000, () => {
-    this.increaseDifficulty(); // Adjust difficulty
-    this.startLevelTimer(); // Restart level timer
-    this.spawnAsteroids(); // Restart asteroid spawning
+    // Pause game momentarily before starting the new level
+    this.time.delayedCall(3000, () => {
+        this.isAdvancingLevel = false; // Reset flag after delay
+        this.increaseDifficulty();
+        this.startLevelTimer(); // Restart timer
+        this.spawnAsteroids(); // Restart spawning
     });
   }
 
@@ -303,43 +327,39 @@ export class GameScene extends Scene {
   }
 
   update() {
-    // Update asteroid positions and check for game over
-    for (let i = this.asteroids.length - 1; i >= 0; i--) {
-      const asteroid = this.asteroids[i];
-      asteroid.sprite.y += this.asteroidSpeed; // Adjust speed as needed
-      asteroid.text.y = asteroid.sprite.y;
+    if (this.isPaused) return; // Stop all updates if paused
 
-      // Check if asteroid reached bottom
-      if (asteroid.sprite.y > this.cameras.main.height) {
-        this.gameOver();
-        break;
-      }
+    for (let i = this.asteroids.length - 1; i >= 0; i--) {
+        const asteroid = this.asteroids[i];
+        asteroid.sprite.y += this.asteroidSpeed;
+        asteroid.text.y = asteroid.sprite.y;
+
+        if (asteroid.sprite.y > this.cameras.main.height) {
+            this.gameOver();
+            break;
+        }
     }
   }
 
   private togglePause() {
-		this.isPaused = !this.isPaused;
+    this.isPaused = !this.isPaused;
 
-		if (this.isPaused) {
-			// Pause the game
-			this.scene.pause();
-			if (this.spawnTimer) {
-				this.spawnTimer.paused = true;
-			}
-			// Launch the pause scene
-			this.scene.launch("PauseScene", { mainScene: this.scene.key });
-		} else {
-			// Resume the game
-			this.scene.resume();
-			if (this.spawnTimer) {
-				this.spawnTimer.paused = false;
-			}
-			this.scene.stop("PauseScene");
-
-      // Resume the countdown timer if it was paused
-      this.startLevelTimer();
-		}
-	}
+    if (this.isPaused) {
+        this.physics.world.isPaused = true;
+        if (this.spawnTimer) this.spawnTimer.paused = true;
+        this.time.paused = true;
+        this.tweens.pauseAll();
+        this.anims.pauseAll();
+        this.scene.launch("PauseScene", { mainScene: this.scene.key });
+    } else {
+        this.physics.world.isPaused = false;
+        if (this.spawnTimer) this.spawnTimer.paused = false;
+        this.time.paused = false;
+        this.tweens.resumeAll();
+        this.anims.resumeAll();
+        this.scene.stop("PauseScene");
+    }
+  }
 
   private updateProgressBar() {
     const { width, height } = this.cameras.main;
@@ -404,18 +424,35 @@ export class GameScene extends Scene {
         return; // Don't exceed 5 asteroids at a time
     }
 
-    const x = this.getAsteroidSpawnX();
+    let x: number = 0, y: number = 0;
+    let safeSpawn: boolean;
+    const maxAttempts = 10; // Limit attempts to prevent infinite loops
+    let attempts = 0;
+
+    do {
+        x = this.getAsteroidSpawnX();
+        y = -50; // Spawn just above the screen
+        safeSpawn = this.asteroids.every(asteroid => 
+            Phaser.Math.Distance.Between(x, y, asteroid.sprite.x, asteroid.sprite.y) > 80
+        );
+        attempts++;
+    } while (!safeSpawn && attempts < maxAttempts);
+
+    if (!safeSpawn) return; // If no safe spot found after max attempts, skip spawning
+
     const word = this.getAsteroidWord();
     const originalWord = word;
 
     const text = this.createAsteroidText(x, word);
     const sprite = this.createAsteroidSprite(x, text.width);
 
+    // Ensure the text appears on top of the asteroid
     sprite.setDepth(1);
     text.setDepth(2);
 
     this.asteroids.push({ sprite, text, word, originalWord });
   }
+
 
   private getAsteroidSpawnX(): number {
     const { width } = this.cameras.main;
@@ -440,19 +477,62 @@ export class GameScene extends Scene {
   }
 
   private getAsteroidWord(): string {
+    // Early check for empty word pool
+    if (!this.wordPool || this.wordPool.length === 0) {
+      console.warn("Word pool is empty! Attempting to refill...");
+      // Try to refill the word pool asynchronously
+      this.refillWordPool();
+      // Return a generic word as fallback
+      return ["asteroid", "meteor", "comet", "planet", "galaxy"][Math.floor(Math.random() * 5)];
+    }
+  
+    // Get current letters in use to avoid duplicates
     const currentStartLetters = this.asteroids.map((asteroid) =>
       asteroid.word.charAt(0).toLowerCase()
     );
-
-    const availablePhrases = this.wordPool.filter(
+  
+    // Try to find words that don't start with same letters as current asteroids
+    let availablePhrases = this.wordPool.filter(
       (phrase) =>
         !currentStartLetters.includes(phrase.charAt(0).toLowerCase()) &&
         !this.asteroids.some((asteroid) => asteroid.word === phrase)
     );
-
-    return availablePhrases.length > 0
-      ? availablePhrases[Phaser.Math.Between(0, availablePhrases.length - 1)]
-      : this.wordPool[Phaser.Math.Between(0, this.wordPool.length - 1)];
+  
+    // If we couldn't find any words with different starting letters,
+    // just exclude words that are already in use
+    if (availablePhrases.length === 0) {
+      availablePhrases = this.wordPool.filter(
+        (phrase) => !this.asteroids.some((asteroid) => asteroid.word === phrase)
+      );
+    }
+  
+    // If we still have no available words, shuffle the word pool and take any word
+    if (availablePhrases.length === 0) {
+      // Clone and shuffle the word pool
+      const shuffledPool = [...this.wordPool].sort(() => Math.random() - 0.5);
+      return shuffledPool[0];
+    }
+  
+    // Pick a random word from available phrases
+    return availablePhrases[Math.floor(Math.random() * availablePhrases.length)];
+  }
+  
+  // Add this helper method to refill the word pool when it's depleted
+  private async refillWordPool() {
+    try {
+      if (this.mode === "free") {
+        const newWords = await fetchWordsForFreePlay(this.length);
+        // Add new words but avoid duplicates
+        this.wordPool = [...new Set([...this.wordPool, ...newWords])];
+      } else if (this.mode === "letter" && this.selectedLetter) {
+        const newWords = await fetchWordsByLetterAndLength(this.selectedLetter, this.length);
+        // Add new words but avoid duplicates
+        this.wordPool = [...new Set([...this.wordPool, ...newWords])];
+      }
+      console.log(`Refilled word pool. New size: ${this.wordPool.length}`);
+    } catch (error) {
+      console.error("Failed to refill word pool:", error);
+    }
   }
 
   // updated to base the scale of the sprite on the width of the word 
@@ -684,15 +764,19 @@ export class GameScene extends Scene {
   }
 
 	shutdown() {
-		this.cleanupGameObjects();
-		this.input.keyboard?.off("keydown", this.handleKeyInput, this);
+    this.cleanupGameObjects();
+    this.input.keyboard?.off("keydown", this.handleKeyInput, this);
     this.input.keyboard?.off("keydown-ESC", this.togglePause, this);
-		this.scene.stop("PauseScene");
+    this.scene.stop("PauseScene");
 
-    // Reset and restart timers properly
+    // Reset pause state
+    this.isPaused = false;
+
+    // Destroy timers so they don't persist
     if (this.spawnTimer) {
-      this.spawnTimer.destroy();
-      this.spawnTimer = undefined;
+        this.spawnTimer.destroy();
+        this.spawnTimer = undefined;
     }
-	}
+    this.time.removeAllEvents();
+  }
 }

@@ -1,6 +1,7 @@
 // PauseScene.ts
 import { Scene } from "phaser";
 import { colors } from "../constants/colors";
+import GameScene from "./GameScene"; 
 
 export class PauseScene extends Scene {
 	private mainScene!: string;
@@ -140,8 +141,12 @@ export class PauseScene extends Scene {
 	}
 
 	resumeGame() {
-		const gameScene = this.scene.get(this.mainScene);
-		gameScene.scene.resume();
+		const gameScene = this.scene.get(this.mainScene) as GameScene;
+	
+		if (gameScene && typeof gameScene.togglePause === "function") {
+			gameScene.togglePause(); // ✅ Properly unpauses everything
+		}
+	
 		this.scene.stop();
 	}
 
