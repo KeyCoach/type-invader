@@ -1,3 +1,5 @@
+// src/app/scenes/SettingsScene.tsx
+
 import { Scene } from "phaser";
 import { alphaValues, colors, hexadecimalColors } from "../constants/colors";
 import {
@@ -8,6 +10,19 @@ import { gameSettings, themeManager, GameSettings } from "@/game";
 
 export class SettingsScene extends Scene {
 	private navigation!: KeyboardNavigation;
+
+	preload() {
+		this.load.image("asteroid", "/assets/img/sprite/asteroid.png");
+		this.load.image("particle", "/assets/img/sprite/particle.png");
+		this.load.image("blue-galaxy", "/assets/img/space/blue-galaxy.png");
+		this.load.image("ship", "/assets/img/sprite/ship.png");
+
+		this.load.image("party-background", "/assets/img/party/party-bg.png");
+
+		this.load.image("soccer-field", "/assets/img/soccer/soccer-field.png");
+
+		this.load.image("beach-background", "/assets/img/beach/beach-bg.png");
+	}
 
 	constructor() {
 		super({ key: "SettingsScene" });
@@ -61,7 +76,8 @@ export class SettingsScene extends Scene {
 					40,
 					hexadecimalColors.menuButtonBg
 				)
-				.setInteractive({ useHandCursor: true });
+				.setInteractive({ useHandCursor: true })
+				.setDepth(2);
 
 			const text = this.add
 				.text(button.x, button.y, theme, {
@@ -73,7 +89,22 @@ export class SettingsScene extends Scene {
 							: colors.white,
 				})
 				.setOrigin(0.5)
-				.setDepth(1);
+				.setDepth(2);
+
+			button.on("pointerover", () => {
+				text.setColor(colors.yellow);
+			});
+
+			button.on("pointerout", () => {
+				if (gameSettings.theme !== theme.toLowerCase()) {
+					text.setColor(colors.white);
+				}
+			});
+
+			// Add click handler
+			button.on("pointerdown", () => {
+				this.setTheme(theme.toLowerCase() as GameSettings["theme"]);
+			});
 
 			navigationItems.push({
 				element: button,
@@ -220,14 +251,15 @@ export class SettingsScene extends Scene {
 
 		themeManager.setTheme(theme);
 
-		const themes = ["Space", "Party", "Soccer", "Beach"];
-		const themeButtons = this.children.list.filter(
+		// Find all theme button texts
+		const themeButtonsTexts = this.children.list.filter(
 			(obj) =>
-				obj instanceof Phaser.GameObjects.Text && themes.includes(obj.text)
-		);
+				obj instanceof Phaser.GameObjects.Text &&
+				["Space", "Party", "Soccer", "Beach"].includes(obj.text)
+		) as Phaser.GameObjects.Text[];
 
-		themeButtons.forEach((button) => {
-			const text = button as Phaser.GameObjects.Text;
+		// Update their colors based on the current theme
+		themeButtonsTexts.forEach((text) => {
 			text.setColor(
 				gameSettings.theme === text.text.toLowerCase()
 					? colors.yellow
@@ -236,6 +268,7 @@ export class SettingsScene extends Scene {
 		});
 
 		console.log(`Theme set to ${gameSettings.theme}`);
+		this.scene.restart();
 	}
 
 	private toggleSound(soundText: Phaser.GameObjects.Text) {

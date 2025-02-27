@@ -15,16 +15,16 @@ interface ThemeAssets {
 }
 
 interface MenuConfig {
-  width?: number;
-  height?: number;
-  horizontalPadding?: number;
-  verticalPadding?: number;
-  borderRadius?: number;
-  alpha?: number;
+	width?: number;
+	height?: number;
+	horizontalPadding?: number;
+	verticalPadding?: number;
+	borderRadius?: number;
+	alpha?: number;
 }
 
 export class ThemeManager {
-	  private scene: Phaser.Scene | null = null;
+	private scene: Phaser.Scene | null = null;
 	private shootingStarTimer?: Phaser.Time.TimerEvent;
 	private currentTheme: GameTheme = "space";
 
@@ -54,53 +54,71 @@ export class ThemeManager {
 				menuBackground: 0x332244,
 			},
 		},
-		// Define other themes...
 		soccer: {
 			background: "soccer-field",
-            asteroid: "soccer-ball",
-            particle: "soccer-ball",
-            ship: "soccer-player",
-            colors: {
-                primary: 0x000000,
-                secondary: 0xffffff,
-                highlight: 0x00ff00,
-                menuBackground: 0x000000,
-            },
+			asteroid: "soccer-ball",
+			particle: "soccer-ball",
+			ship: "soccer-player",
+			colors: {
+				primary: 0x000000,
+				secondary: 0xffffff,
+				highlight: 0x00ff00,
+				menuBackground: 0x000000,
+			},
 		},
 		beach: {
 			background: "beach-background",
-            asteroid: "coconut",
-            particle: "water-splash",
-            ship: "surfboard",
-            colors: {
-                primary: 0x00ffff,
-                secondary: 0xffff00,
-                highlight: 0xffa500,
-                menuBackground: 0x87ceeb,
-		    },
-        },
+			asteroid: "coconut",
+			particle: "water-splash",
+			ship: "surfboard",
+			colors: {
+				primary: 0x00ffff,
+				secondary: 0xffff00,
+				highlight: 0xffa500,
+				menuBackground: 0x87ceeb,
+			},
+		},
 	};
 
-	constructor() {
-	}
+	constructor() {}
 
 	setScene(scene: Phaser.Scene): void {
-    this.scene = scene;
-  }
+		this.scene = scene;
+	}
 
 	setTheme(theme: GameTheme): void {
 		this.currentTheme = theme;
-		
-		if(this.scene) {
+
+		if (this.scene) {
 			const backgroundObjects = this.scene.children.list.filter(
-				obj => obj instanceof Phaser.GameObjects.Image && ['blue-galaxy', 'party-background', 'soccer-field', 'beach-background'].includes(obj.texture.key)
+				(obj) => obj instanceof Phaser.GameObjects.Image && obj.depth === -1 // Assuming we set backgrounds to depth -1
 			);
 
 			if (backgroundObjects.length > 0) {
-				(backgroundObjects[0] as Phaser.GameObjects.Image).setTexture(this.getAsset('background'));
+				const bg = backgroundObjects[0] as Phaser.GameObjects.Image;
+				bg.setTexture(this.getAsset("background"));
+
+				// Reset background size
+				const { width, height } = this.scene.cameras.main;
+				bg.setDisplaySize(width, height);
 			} else {
 				this.createBackground();
 			}
+		}
+
+		const menuBackgrounds = this.scene?.children.list.filter(
+			(obj) => obj instanceof Phaser.GameObjects.Graphics && obj.depth === 1
+		);
+
+		if (typeof menuBackgrounds != "undefined" && menuBackgrounds.length > 0) {
+			const mengBg = menuBackgrounds[0] as Phaser.GameObjects.Graphics;
+			mengBg.clear();
+			mengBg.fillStyle(this.getColor("menuBackground"), 0.7);
+
+			// Update menu background
+			if (!this.scene) return;
+			const { width, height } = this.scene?.cameras.main;
+			mengBg.fillRoundedRect(width / 2 - 280, height / 2 - 165, 560, 330, 20);
 		}
 
 		// TODO: update other theme specific assets later
@@ -120,20 +138,20 @@ export class ThemeManager {
 
 	createBackground(): Phaser.GameObjects.Image | null {
 		if (!this.scene) return null;
-		
-		const { width, height } = this.scene.cameras.main;
-		const bg = this.scene.add
-			.image(width / 2, height / 2, this.getAsset('background'))
-			.setDisplaySize(width, height)
-		
-		bg.setDepth(-1);
-		
-		return bg;
-  	}
 
-	createMenuBackground(config: MenuConfig = {}): Phaser.GameObjects.Graphics | null {
+		const { width, height } = this.scene.cameras.main;
+		return this.scene.add
+			.image(width / 2, height / 2, this.getAsset("background"))
+			.setOrigin(0.5)
+			.setDisplaySize(width, height)
+			.setDepth(-1); // Consistent depth for easy finding later
+	}
+
+	createMenuBackground(
+		config: MenuConfig = {}
+	): Phaser.GameObjects.Graphics | null {
 		if (!this.scene) return null;
-		
+
 		const { width, height } = this.scene.cameras.main;
 		const {
 			width: menuWidth = 400,
@@ -203,7 +221,7 @@ export class ThemeManager {
 	// Theme-specific effect methods
 	private createShootingStar(): void {
 		if (!this.scene) return;
-		
+
 		// Original shooting star code
 		const { width, height } = this.scene.cameras.main;
 
