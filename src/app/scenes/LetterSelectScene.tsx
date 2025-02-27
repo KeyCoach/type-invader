@@ -1,5 +1,5 @@
 import { Scene } from "phaser";
-import { colors } from "../constants/colors";
+import { alphaValues, colors, hexadecimalColors } from "../constants/colors";
 import {
 	KeyboardNavigation,
 	NavigationItem,
