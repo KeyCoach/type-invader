@@ -3,6 +3,7 @@ import { Scene } from "phaser";
 import { fetchWordsByLetterAndLength, extractWords, fetchWordsForFreePlay } from "../constants/words-api";
 import { colors, hexadecimalColors } from "../constants/colors";
 import PauseButton from "../../components/PauseButton"
+import { themeManager } from "@/game";
 
 const MULTIPLIER_THRESHOLDS = {
     2: 30,
@@ -122,6 +123,7 @@ export class GameScene extends Scene {
   async create() {
     const { width, height } = this.cameras.main;
 
+
     // Ensure the game is not paused when restarting
     this.isPaused = false;
 
@@ -129,7 +131,11 @@ export class GameScene extends Scene {
     this.timer = 30;
 
     // Background and ship
-    const background = this.add.image(width, height / 2, "background");
+    this.input.keyboard?.on("keydown-ESC", this.togglePause, this);
+  
+    themeManager.setScene(this);
+		themeManager.createBackground();
+    
     this.ship = this.add.sprite(width / 2, height - 50, "ship").setScale(0.75);
 
     // Score UI

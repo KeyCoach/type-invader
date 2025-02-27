@@ -1,6 +1,10 @@
 import { Scene } from "phaser";
-import { colors } from "../constants/colors";
-import { KeyboardNavigation, NavigationItem } from "../../utils/NavigationUtils";
+import { alphaValues, colors, hexadecimalColors } from "../constants/colors";
+import {
+	KeyboardNavigation,
+	NavigationItem,
+} from "../../utils/NavigationUtils";
+import { themeManager } from "@/game";
 
 export class LetterSelectScene extends Scene {
 	private navigation!: KeyboardNavigation;
@@ -12,8 +16,16 @@ export class LetterSelectScene extends Scene {
 	create() {
 		const { width, height } = this.cameras.main;
 
+		themeManager.setScene(this);
+		themeManager.createBackground();
+		themeManager.createMenuBackground();
+
 		// Initialize keyboard navigation
 		this.navigation = new KeyboardNavigation(this).init();
+
+		// Letters select screen container
+		// const menuHeight = 380;
+		// const menuWidth = 480;
 
 		// Title
 		this.add
@@ -22,7 +34,8 @@ export class LetterSelectScene extends Scene {
 				fontFamily: "Monospace",
 				color: colors.white,
 			})
-			.setOrigin(0.5);
+			.setOrigin(0.5)
+			.setDepth(1);
 
 		// Create letter grid
 		const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
@@ -44,7 +57,7 @@ export class LetterSelectScene extends Scene {
 			const y = startY + row * (buttonHeight + padding);
 
 			const letterButton = this.add
-				.rectangle(x, y, buttonWidth, buttonHeight, 0x444444)
+				.rectangle(x, y, buttonWidth, buttonHeight, hexadecimalColors.menuButtonBg)
 				.setInteractive({ useHandCursor: true });
 
 			const letterText = this.add
@@ -53,7 +66,8 @@ export class LetterSelectScene extends Scene {
 					fontFamily: "Monospace",
 					color: colors.white,
 				})
-				.setOrigin(0.5);
+				.setOrigin(0.5)
+				.setDepth(1);
 
 			// Group button and text for hover effects
 			const buttonGroup = [letterButton, letterText];
@@ -64,7 +78,7 @@ export class LetterSelectScene extends Scene {
 					letterText.setColor(colors.yellow);
 				})
 				.on("pointerout", () => {
-					letterButton.setFillStyle(0x444444);
+					letterButton.setFillStyle(hexadecimalColors.menuButtonBg);
 					letterText.setColor(colors.white);
 				})
 				.on("pointerdown", () => {
