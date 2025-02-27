@@ -6,6 +6,7 @@ interface ThemeAssets {
 	asteroid: string;
 	particle: string;
 	ship: string;
+	animation?: string;
 	colors: {
 		primary: number;
 		secondary: number;
@@ -35,6 +36,7 @@ export class ThemeManager {
 			asteroid: "asteroid",
 			particle: "particle",
 			ship: "ship",
+			animation: "spin",
 			colors: {
 				primary: 0xf0f0f0,
 				secondary: 0x62de6d,
@@ -47,6 +49,7 @@ export class ThemeManager {
 			asteroid: "balloon",
 			particle: "confetti",
 			ship: "party-hat",
+			animation: "sway",
 			colors: {
 				primary: 0xffd700,
 				secondary: 0xff6b6b,
@@ -59,6 +62,7 @@ export class ThemeManager {
 			asteroid: "soccer-ball",
 			particle: "soccer-ball",
 			ship: "soccer-player",
+			animation: "kick",
 			colors: {
 				primary: 0x000000,
 				secondary: 0xffffff,
@@ -71,6 +75,7 @@ export class ThemeManager {
 			asteroid: "coconut",
 			particle: "water-splash",
 			ship: "surfboard",
+			animation: "ride",
 			colors: {
 				primary: 0x00ffff,
 				secondary: 0xffff00,
@@ -89,39 +94,69 @@ export class ThemeManager {
 	setTheme(theme: GameTheme): void {
 		this.currentTheme = theme;
 
-		if (this.scene) {
-			const backgroundObjects = this.scene.children.list.filter(
-				(obj) => obj instanceof Phaser.GameObjects.Image && obj.depth === -1 // Assuming we set backgrounds to depth -1
-			);
+		// Skip if no scene is set
+		if (!this.scene) return;
 
-			if (backgroundObjects.length > 0) {
-				const bg = backgroundObjects[0] as Phaser.GameObjects.Image;
-				bg.setTexture(this.getAsset("background"));
+		// Update background image
+		const backgroundObjects = this.scene.children.list.filter(
+			(obj) => obj instanceof Phaser.GameObjects.Image && obj.depth === -1
+		);
 
-				// Reset background size
-				const { width, height } = this.scene.cameras.main;
-				bg.setDisplaySize(width, height);
-			} else {
-				this.createBackground();
-			}
+		if (backgroundObjects.length > 0) {
+			const bg = backgroundObjects[0] as Phaser.GameObjects.Image;
+			bg.setTexture(this.getAsset("background"));
+
+			// Reset background size
+			const { width, height } = this.scene.cameras.main;
+			bg.setDisplaySize(width, height);
+		} else {
+			this.createBackground();
 		}
 
+		// Update menu backgrounds
 		const menuBackgrounds = this.scene?.children.list.filter(
 			(obj) => obj instanceof Phaser.GameObjects.Graphics && obj.depth === 1
 		);
 
 		if (typeof menuBackgrounds != "undefined" && menuBackgrounds.length > 0) {
-			const mengBg = menuBackgrounds[0] as Phaser.GameObjects.Graphics;
-			mengBg.clear();
-			mengBg.fillStyle(this.getColor("menuBackground"), 0.7);
+			const menuBg = menuBackgrounds[0] as Phaser.GameObjects.Graphics;
+			menuBg.clear();
+			menuBg.fillStyle(this.getColor("menuBackground"), 0.7);
 
 			// Update menu background
-			if (!this.scene) return;
-			const { width, height } = this.scene?.cameras.main;
-			mengBg.fillRoundedRect(width / 2 - 280, height / 2 - 165, 560, 330, 20);
+			const { width, height } = this.scene.cameras.main;
+			menuBg.fillRoundedRect(width / 2 - 280, height / 2 - 165, 560, 330, 20);
 		}
 
-		// TODO: update other theme specific assets later
+		// Update asteroids to match the current theme
+		const asteroids = this.scene.children.list.filter(
+			(obj) =>
+				obj instanceof Phaser.GameObjects.Sprite &&
+				(obj.texture.key === "asteroid" ||
+					obj.texture.key === "balloon" ||
+					obj.texture.key === "soccer-ball" ||
+					obj.texture.key === "coconut")
+		);
+
+		if (asteroids.length > 0) {
+			asteroids.forEach((asteroid) => {
+				(asteroid as Phaser.GameObjects.Sprite).setTexture(
+					this.getAsset("asteroid")
+				);
+			});
+		}
+
+		// Update ship sprite if it exists
+		const ships = this.scene.children.list.filter(
+			(obj) =>
+				obj instanceof Phaser.GameObjects.Sprite && obj.texture.key === "ship"
+		);
+
+		if (ships.length > 0) {
+			ships.forEach((ship) => {
+				(ship as Phaser.GameObjects.Sprite).setTexture(this.getAsset("ship"));
+			});
+		}
 	}
 
 	getCurrentTheme(): GameTheme {
@@ -129,6 +164,9 @@ export class ThemeManager {
 	}
 
 	getAsset(key: keyof ThemeAssets): string {
+		if (key === "animation") {
+			return this.themeAssets[this.currentTheme][key] as string;
+		}
 		return this.themeAssets[this.currentTheme][key] as string;
 	}
 

@@ -15,16 +15,24 @@ export class MainMenuScene extends Scene {
 	}
 
 	preload() {
-		this.load.image("asteroid", "/assets/img/sprite/asteroid.png");
 		this.load.image("particle", "/assets/img/sprite/particle.png");
-		this.load.image("blue-galaxy", "/assets/img/space/blue-galaxy.png");
 		this.load.image("ship", "/assets/img/sprite/ship.png");
 
-		this.load.image("party-background", "/assets/img/party/party-bg.png");
+		// space
+		this.load.image("blue-galaxy", "/assets/img/space/blue-galaxy.png");
+		this.load.image("asteroid", "/assets/img/space/asteroid.png");
 
+		// party
+		this.load.image("party-background", "/assets/img/party/party-bg.png");
+		this.load.image("balloon", "/assets/img/party/white-baloon.png");
+
+		// soccer
 		this.load.image("soccer-field", "/assets/img/soccer/soccer-field.png");
+		this.load.image("soccer-ball", "/assets/img/soccer/soccer-ball.png");
 		
+		// beach
 		this.load.image("beach-background", "/assets/img/beach/beach-bg.png");
+		this.load.image("coconut", "/assets/img/beach/coconut.png");
 	}
 
 	create() {
@@ -45,7 +53,7 @@ export class MainMenuScene extends Scene {
 
 		// Title
 		this.add
-			.text(width / 2, height / 2 - 80, "Typing Asteroids", {
+			.text(width / 2, height / 2 - 80, "Type Invader", {
 				fontSize: "48px",
 				fontFamily: "Monospace",
 				color: colors.white,
