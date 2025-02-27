@@ -1,4 +1,5 @@
 import { Scene } from "phaser";
+import { themeManager } from "@/game";
 import { alphaValues, colors, hexadecimalColors } from "../constants/colors";
 import {
 	KeyboardNavigation,
@@ -23,11 +24,9 @@ export class MainMenuScene extends Scene {
 	create() {
 		const { width, height } = this.cameras.main;
 
-		// Add background with correct positioning
-		const background = this.add
-			.image(0, 0, "background")
-			.setOrigin(0, 0)
-			.setDisplaySize(width, height);
+		themeManager.setScene(this);
+		themeManager.createBackground();
+		themeManager.createMenuBackground();
 
 		// Initialize keyboard navigation
 		this.navigation = new KeyboardNavigation(this).init();
@@ -129,6 +128,10 @@ export class MainMenuScene extends Scene {
 			this.createShootingStar();
 			this.nextStarTime = time + Phaser.Math.Between(500, 2000);
 		}
+	}
+
+	shutdown() {
+		themeManager.stopThemeEffects();
 	}
 
 	private createShootingStar() {

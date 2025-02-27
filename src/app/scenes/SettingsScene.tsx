@@ -8,22 +8,10 @@ import {
 	KeyboardNavigation,
 	NavigationItem,
 } from "../../utils/NavigationUtils";
-
-export interface GameSettings {
-	theme: "space" | "party" | "soccer" | "beach";
-	soundEnabled: boolean;
-	musicVolume: number;
-	sfxVolume: number;
-}
+import { gameSettings, themeManager, GameSettings } from "@/game";
 
 export class SettingsScene extends Scene {
 	private navigation!: KeyboardNavigation;
-	private settings: GameSettings = {
-		theme: "space",
-		soundEnabled: true,
-		musicVolume: 0.7,
-		sfxVolume: 0.8,
-	};
 
 	constructor() {
 		super({ key: "SettingsScene" });
@@ -32,33 +20,18 @@ export class SettingsScene extends Scene {
 	create() {
 		const { width, height } = this.cameras.main;
 
-		const background = this.add
-			.image(0, 0, "background")
-			.setOrigin(0, 0)
-			.setDisplaySize(width, height);
+		themeManager.setScene(this);
+		themeManager.createBackground();
+		themeManager.createMenuBackground();
 
 		// Initialize keyboard navigation
 		this.navigation = new KeyboardNavigation(this).init();
 
 		// Settings menu container
-		const horizontalPadding = 80;
-		const verticalPadding = 40;
-		const menuHeight = 380;
-		const menuWidth = 500;
-
-		const menuButtonBox = this.add.graphics();
-		menuButtonBox.fillStyle(
-			hexadecimalColors.menuButtonBox,
-			alphaValues.menuButtonBox
-		);
-		menuButtonBox.fillRoundedRect(
-			width / 2 - (menuWidth + horizontalPadding * 2) / 2, // x
-			height / 2 - (menuHeight + verticalPadding * 2) / 2 - 18, // y
-			menuWidth + horizontalPadding * 2,
-			menuHeight + verticalPadding * 2,
-			20 // border radius
-		);
-		menuButtonBox.setDepth(1);
+		// const horizontalPadding = 80;
+		// const verticalPadding = 40;
+		// const menuHeight = 380;
+		// const menuWidth = 500;
 
 		// Title
 		this.add
@@ -99,7 +72,7 @@ export class SettingsScene extends Scene {
 					fontSize: "20px",
 					fontFamily: "Monospace",
 					color:
-						this.settings.theme === theme.toLowerCase()
+						gameSettings.theme === theme.toLowerCase()
 							? colors.yellow
 							: colors.white,
 				})
@@ -135,11 +108,11 @@ export class SettingsScene extends Scene {
 			.text(
 				soundToggle.x,
 				soundToggle.y,
-				this.settings.soundEnabled ? "ON" : "OFF",
+				gameSettings.soundEnabled ? "ON" : "OFF",
 				{
 					fontSize: "20px",
 					fontFamily: "Monospace",
-					color: this.settings.soundEnabled ? colors.green : colors.red,
+					color: gameSettings.soundEnabled ? colors.green : colors.red,
 				}
 			)
 			.setOrigin(0.5)
@@ -194,9 +167,9 @@ export class SettingsScene extends Scene {
 				sliderValue.setText(`${Math.round(value * 100)}%`);
 
 				if (label === "Music:") {
-					this.settings.musicVolume = value;
+					gameSettings.musicVolume = value;
 				} else {
-					this.settings.sfxVolume = value;
+					gameSettings.sfxVolume = value;
 				}
 			});
 
@@ -207,8 +180,8 @@ export class SettingsScene extends Scene {
 			});
 		};
 
-		createVolumeSlider(height / 2 + 80, "Music:", this.settings.musicVolume, 2);
-		createVolumeSlider(height / 2 + 160, "SFX:", this.settings.sfxVolume, 3);
+		createVolumeSlider(height / 2 + 80, "Music:", gameSettings.musicVolume, 2);
+		createVolumeSlider(height / 2 + 160, "SFX:", gameSettings.sfxVolume, 3);
 
 		// Back button
 		const backButton = this.add
@@ -247,16 +220,16 @@ export class SettingsScene extends Scene {
 	}
 
 	private setTheme(theme: GameSettings["theme"]) {
-		this.settings.theme = theme;
+		gameSettings.theme = theme;
 		// TODO: Implement theme change logic
 		console.log(`Theme changed to: ${theme}`);
 	}
 
 	private toggleSound(soundText: Phaser.GameObjects.Text) {
-		this.settings.soundEnabled = !this.settings.soundEnabled;
-		soundText.setText(this.settings.soundEnabled ? "ON" : "OFF");
-		soundText.setColor(this.settings.soundEnabled ? colors.green : colors.red);
+		gameSettings.soundEnabled = !gameSettings.soundEnabled;
+		soundText.setText(gameSettings.soundEnabled ? "ON" : "OFF");
+		soundText.setColor(gameSettings.soundEnabled ? colors.green : colors.red);
 		// Here you would implement the actual sound toggle logic
-		console.log(`Sound ${this.settings.soundEnabled ? "enabled" : "disabled"}`);
+		console.log(`Sound ${gameSettings.soundEnabled ? "enabled" : "disabled"}`);
 	}
 }

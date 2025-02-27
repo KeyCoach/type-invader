@@ -1,4 +1,5 @@
 import { Game, Types } from "phaser";
+import { ThemeManager, GameTheme } from "./utils/ThemeManager";
 import { MainMenuScene } from "./app/scenes/MainMenuScene";
 import { GameScene } from "./app/scenes/GameScene";
 import { GameOverScene } from "./app/scenes/GameOverScene";
@@ -6,6 +7,22 @@ import { ModeSelectScene } from "./app/scenes/ModeSelectScene";
 import { LetterSelectScene } from "./app/scenes/LetterSelectScene";
 import { PauseScene } from "./app/scenes/PauseScene";
 import { SettingsScene } from "./app/scenes/SettingsScene";
+
+export interface GameSettings {
+	theme: "space" | "party" | "soccer" | "beach";
+	soundEnabled: boolean;
+	musicVolume: number;
+	sfxVolume: number;
+}
+
+export const gameSettings: GameSettings = {
+	theme: "space",
+	musicVolume: 0.5,
+	sfxVolume: 0.5,
+	soundEnabled: false,
+};
+
+export const themeManager = new ThemeManager();
 
 export const gameConfig: Types.Core.GameConfig = {
 	type: Phaser.AUTO,
@@ -28,7 +45,7 @@ export const gameConfig: Types.Core.GameConfig = {
 		GameScene,
 		GameOverScene,
 		PauseScene,
-		SettingsScene
+		SettingsScene,
 	],
 };
 
