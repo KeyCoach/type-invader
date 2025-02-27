@@ -35,22 +35,20 @@ export class MainMenuScene extends Scene {
 		// Create container background with alpha
 		const horizontalPadding = 80;
 		const verticalPadding = 40;
-		const menuHeight = 250; // Adjust based on content
-		const menuWidth = 400; // Adjust based on content
+		const menuHeight = 250;
+		const menuWidth = 400;
 
 		const menuBackground = this.add.graphics();
 		menuBackground.fillStyle(0x282c34, 0.8);
 		menuBackground.fillRoundedRect(
-			width / 2 - (menuWidth + horizontalPadding * 2) / 2, // x position
-			height / 2 - (menuHeight + verticalPadding * 2) / 2, // y position
-			menuWidth + horizontalPadding * 2, // width
-			menuHeight + verticalPadding * 2, // height
-			20 // corner radius
+			width / 2 - (menuWidth + horizontalPadding * 2) / 2, // x
+			height / 2 - (menuHeight + verticalPadding * 2) / 2, // y
+			menuWidth + horizontalPadding * 2,
+			menuHeight + verticalPadding * 2,
+			20 // border radius
 		);
 		menuBackground.setDepth(1);
 
-		// Set depth for menu container and all menu elements
-		menuBackground.setDepth(1);
 
 		// Title
 		this.add

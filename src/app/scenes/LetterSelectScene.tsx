@@ -12,8 +12,30 @@ export class LetterSelectScene extends Scene {
 	create() {
 		const { width, height } = this.cameras.main;
 
+		const background = this.add
+			.image(0, 0, "background")
+			.setOrigin(0, 0)
+			.setDisplaySize(width, height);
+
 		// Initialize keyboard navigation
 		this.navigation = new KeyboardNavigation(this).init();
+
+		// Letters select screen container
+		const horizontalPadding = 80;
+		const verticalPadding = 40;
+		const menuHeight = 380;
+		const menuWidth = 480;
+
+		const menuBackground = this.add.graphics();
+		menuBackground.fillStyle(0x282c34, 0.8);
+		menuBackground.fillRoundedRect(
+			width / 2 - (menuWidth + horizontalPadding * 2) / 2, // x
+			height / 2 - (menuHeight + verticalPadding * 2) / 2 - 24, // y
+			menuWidth + horizontalPadding * 2,
+			menuHeight + verticalPadding * 2,
+			20 // border radius
+		);
+		menuBackground.setDepth(1);
 
 		// Title
 		this.add
@@ -22,7 +44,8 @@ export class LetterSelectScene extends Scene {
 				fontFamily: "Monospace",
 				color: colors.white,
 			})
-			.setOrigin(0.5);
+			.setOrigin(0.5)
+			.setDepth(1);
 
 		// Create letter grid
 		const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
@@ -53,7 +76,8 @@ export class LetterSelectScene extends Scene {
 					fontFamily: "Monospace",
 					color: colors.white,
 				})
-				.setOrigin(0.5);
+				.setOrigin(0.5)
+				.setDepth(1);
 
 			// Group button and text for hover effects
 			const buttonGroup = [letterButton, letterText];

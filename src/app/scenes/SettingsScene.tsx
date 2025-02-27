@@ -6,7 +6,7 @@ import {
 } from "../../utils/NavigationUtils";
 
 export interface GameSettings {
-	theme: "classic" | "neon" | "retro";
+	theme: "space" | "party" | "soccer" | "beach";
 	soundEnabled: boolean;
 	musicVolume: number;
 	sfxVolume: number;
@@ -15,7 +15,7 @@ export interface GameSettings {
 export class SettingsScene extends Scene {
 	private navigation!: KeyboardNavigation;
 	private settings: GameSettings = {
-		theme: "classic",
+		theme: "space",
 		soundEnabled: true,
 		musicVolume: 0.7,
 		sfxVolume: 0.8,
@@ -28,8 +28,30 @@ export class SettingsScene extends Scene {
 	create() {
 		const { width, height } = this.cameras.main;
 
+		const background = this.add
+			.image(0, 0, "background")
+			.setOrigin(0, 0)
+			.setDisplaySize(width, height);
+
 		// Initialize keyboard navigation
 		this.navigation = new KeyboardNavigation(this).init();
+
+		// Settings menu container
+		const horizontalPadding = 80;
+		const verticalPadding = 40;
+		const menuHeight = 380;
+		const menuWidth = 500;
+
+		const menuBackground = this.add.graphics();
+		menuBackground.fillStyle(0x282c34, 0.8);
+		menuBackground.fillRoundedRect(
+			width / 2 - (menuWidth + horizontalPadding * 2) / 2, // x
+			height / 2 - (menuHeight + verticalPadding * 2) / 2 - 18, // y
+			menuWidth + horizontalPadding * 2,
+			menuHeight + verticalPadding * 2,
+			20 // border radius
+		);
+		menuBackground.setDepth(1);
 
 		// Title
 		this.add
@@ -38,20 +60,22 @@ export class SettingsScene extends Scene {
 				fontFamily: "Monospace",
 				color: colors.white,
 			})
-			.setOrigin(0.5);
+			.setOrigin(0.5)
+			.setDepth(1);
 
 		const navigationItems: NavigationItem[] = [];
 
 		// Theme Selection
 		const themeLabel = this.add
-			.text(width / 4, height / 3, "Theme:", {
+			.text(width / 6, height / 3, "Theme:", {
 				fontSize: "24px",
 				fontFamily: "Monospace",
 				color: colors.white,
 			})
-			.setOrigin(0, 0.5);
+			.setOrigin(0, 0.5)
+			.setDepth(1);
 
-		const themes = ["Classic", "Neon", "Retro"];
+		const themes = ["Space", "Party", "Soccer", "Beach"];
 		const themeButtons = themes.map((theme, index) => {
 			const button = this.add
 				.rectangle(width / 2 + (index - 1) * 120, height / 3, 100, 40, 0x444444)
@@ -66,7 +90,8 @@ export class SettingsScene extends Scene {
 							? colors.yellow
 							: colors.white,
 				})
-				.setOrigin(0.5);
+				.setOrigin(0.5)
+				.setDepth(1);
 
 			navigationItems.push({
 				element: button,
@@ -80,16 +105,18 @@ export class SettingsScene extends Scene {
 
 		// Sound Toggle
 		const soundLabel = this.add
-			.text(width / 4, height / 2, "Sound:", {
+			.text(width / 6, height / 2, "Sound:", {
 				fontSize: "24px",
 				fontFamily: "Monospace",
 				color: colors.white,
 			})
-			.setOrigin(0, 0.5);
+			.setOrigin(0, 0.5)
+			.setDepth(1);
 
 		const soundToggle = this.add
 			.rectangle(width / 2, height / 2, 100, 40, 0x444444)
-			.setInteractive({ useHandCursor: true });
+			.setInteractive({ useHandCursor: true })
+			.setDepth(1);
 
 		const soundText = this.add
 			.text(
@@ -102,7 +129,8 @@ export class SettingsScene extends Scene {
 					color: this.settings.soundEnabled ? colors.green : colors.red,
 				}
 			)
-			.setOrigin(0.5);
+			.setOrigin(0.5)
+			.setDepth(1);
 
 		navigationItems.push({
 			element: soundToggle,
@@ -118,20 +146,23 @@ export class SettingsScene extends Scene {
 			rowIndex: number
 		) => {
 			const sliderLabel = this.add
-				.text(width / 4, yPos, label, {
+				.text(width / 6, yPos, label, {
 					fontSize: "24px",
 					fontFamily: "Monospace",
 					color: colors.white,
 				})
-				.setOrigin(0, 0.5);
+				.setOrigin(0, 0.5)
+				.setDepth(1);
 
 			const sliderBg = this.add
 				.rectangle(width / 2, yPos, 200, 10, 0x666666)
-				.setOrigin(0.5);
+				.setOrigin(0.5)
+				.setDepth(1);
 
 			const slider = this.add
 				.rectangle(width / 2 - 100 + initialValue * 200, yPos, 20, 30, 0x888888)
-				.setInteractive({ draggable: true, useHandCursor: true });
+				.setInteractive({ draggable: true, useHandCursor: true })
+				.setDepth(1);
 
 			const sliderValue = this.add
 				.text(width / 2 + 120, yPos, `${Math.round(initialValue * 100)}%`, {
@@ -139,7 +170,8 @@ export class SettingsScene extends Scene {
 					fontFamily: "Monospace",
 					color: colors.white,
 				})
-				.setOrigin(0, 0.5);
+				.setOrigin(0, 0.5)
+				.setDepth(1);
 
 			slider.on("drag", (pointer: Phaser.Input.Pointer) => {
 				const minX = width / 2 - 100;
@@ -203,7 +235,7 @@ export class SettingsScene extends Scene {
 
 	private setTheme(theme: GameSettings["theme"]) {
 		this.settings.theme = theme;
-		// Here you would implement the actual theme change logic
+		// TODO: Implement theme change logic
 		console.log(`Theme changed to: ${theme}`);
 	}
 

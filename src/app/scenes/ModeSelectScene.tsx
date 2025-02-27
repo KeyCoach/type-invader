@@ -12,8 +12,30 @@ export class ModeSelectScene extends Scene {
 	create() {
 		const { width, height } = this.cameras.main;
 
+		const background = this.add
+			.image(0, 0, "background")
+			.setOrigin(0, 0)
+			.setDisplaySize(width, height);
+
 		// Initialize keyboard navigation
 		this.navigation = new KeyboardNavigation(this).init();
+
+		// Buttons container
+		const horizontalPadding = 80;
+		const verticalPadding = 40;
+		const menuHeight = 230;
+		const menuWidth = 400;
+
+		const menuBackground = this.add.graphics();
+		menuBackground.fillStyle(0x282c34, 0.8);
+		menuBackground.fillRoundedRect(
+			width / 2 - (menuWidth + horizontalPadding * 2) / 2, // x
+			height / 2 - (menuHeight + verticalPadding * 2) / 2 - 48, // y
+			menuWidth + horizontalPadding * 2,
+			menuHeight + verticalPadding * 2,
+			20 // border radius
+		);
+		menuBackground.setDepth(1);
 
 		// Title
 		this.add
@@ -22,7 +44,8 @@ export class ModeSelectScene extends Scene {
 				fontFamily: "Monospace",
 				color: colors.white,
 			})
-			.setOrigin(0.5);
+			.setOrigin(0.5)
+			.setDepth(1);
 
 		// Free Play button
 		const freePlayButton = this.add
@@ -32,6 +55,7 @@ export class ModeSelectScene extends Scene {
 				color: colors.green,
 			})
 			.setOrigin(0.5)
+			.setDepth(1)
 			.setInteractive({ useHandCursor: true })
 			.on("pointerover", () => freePlayButton.setColor(colors.yellow))
 			.on("pointerout", () => freePlayButton.setColor(colors.green))
@@ -45,6 +69,7 @@ export class ModeSelectScene extends Scene {
 				color: colors.green,
 			})
 			.setOrigin(0.5)
+			.setDepth(1)
 			.setInteractive({ useHandCursor: true })
 			.on("pointerover", () => letterModeButton.setColor(colors.yellow))
 			.on("pointerout", () => letterModeButton.setColor(colors.green))
