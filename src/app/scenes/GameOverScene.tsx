@@ -1,6 +1,9 @@
 import { Scene } from "phaser";
-import { colors, hexadecimalColors } from "../constants/colors";
-import { KeyboardNavigation, NavigationItem } from "../../utils/NavigationUtils";
+import { alphaValues, colors, hexadecimalColors } from "../constants/colors";
+import {
+	KeyboardNavigation,
+	NavigationItem,
+} from "../../utils/NavigationUtils";
 
 export class GameOverScene extends Scene {
 	private score: number = 0;
@@ -33,7 +36,10 @@ export class GameOverScene extends Scene {
 		const menuWidth = 400;
 
 		const menuBackground = this.add.graphics();
-		menuBackground.fillStyle(0x282c34, 0.8);
+		menuBackground.fillStyle(
+			hexadecimalColors.menuBackground,
+			alphaValues.menuBackground
+		);
 		menuBackground.fillRoundedRect(
 			width / 2 - (menuWidth + horizontalPadding * 2) / 2, // x
 			height / 2 - (menuHeight + verticalPadding * 2) / 2, // y
@@ -46,7 +52,7 @@ export class GameOverScene extends Scene {
 		this.add
 			.text(width / 2, height / 3, "GAME OVER", {
 				fontSize: "42px",
-				color: "#ffffff",
+				color: colors.whiteText,
 			})
 			.setOrigin(0.5)
 			.setDepth(1);
@@ -54,7 +60,7 @@ export class GameOverScene extends Scene {
 		this.add
 			.text(width / 2, height / 2, `Final Score: ${this.score}`, {
 				fontSize: "24px",
-				color: "#ffffff",
+				color: colors.whiteText,
 			})
 			.setOrigin(0.5)
 			.setDepth(1);
@@ -92,7 +98,7 @@ export class GameOverScene extends Scene {
 				color: colors.white,
 			})
 			.setOrigin(0.5);
-		
+
 		this.nextStarTime = this.time.now + Phaser.Math.Between(500, 2000);
 	}
 

@@ -1,5 +1,5 @@
 import { Scene } from "phaser";
-import { colors, hexadecimalColors } from "../constants/colors";
+import { alphaValues, colors, hexadecimalColors } from "../constants/colors";
 import {
 	KeyboardNavigation,
 	NavigationItem,
@@ -39,7 +39,10 @@ export class MainMenuScene extends Scene {
 		const menuWidth = 400;
 
 		const menuBackground = this.add.graphics();
-		menuBackground.fillStyle(0x282c34, 0.8);
+		menuBackground.fillStyle(
+			hexadecimalColors.menuBackground,
+			alphaValues.menuBackground
+		);
 		menuBackground.fillRoundedRect(
 			width / 2 - (menuWidth + horizontalPadding * 2) / 2, // x
 			height / 2 - (menuHeight + verticalPadding * 2) / 2, // y
@@ -48,7 +51,6 @@ export class MainMenuScene extends Scene {
 			20 // border radius
 		);
 		menuBackground.setDepth(1);
-
 
 		// Title
 		this.add
