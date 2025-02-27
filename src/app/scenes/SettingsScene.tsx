@@ -1,5 +1,9 @@
 import { Scene } from "phaser";
-import { alphaValues, colors, hexadecimalColors } from "../constants/colors";
+import {
+	alphaValues,
+	colors,
+	hexadecimalColors,
+} from "../constants/colors";
 import {
 	KeyboardNavigation,
 	NavigationItem,
@@ -42,19 +46,19 @@ export class SettingsScene extends Scene {
 		const menuHeight = 380;
 		const menuWidth = 500;
 
-		const menuBackground = this.add.graphics();
-		menuBackground.fillStyle(
-			hexadecimalColors.menuBackground,
-			alphaValues.menuBackground
+		const menuButtonBox = this.add.graphics();
+		menuButtonBox.fillStyle(
+			hexadecimalColors.menuButtonBox,
+			alphaValues.menuButtonBox
 		);
-		menuBackground.fillRoundedRect(
+		menuButtonBox.fillRoundedRect(
 			width / 2 - (menuWidth + horizontalPadding * 2) / 2, // x
 			height / 2 - (menuHeight + verticalPadding * 2) / 2 - 18, // y
 			menuWidth + horizontalPadding * 2,
 			menuHeight + verticalPadding * 2,
 			20 // border radius
 		);
-		menuBackground.setDepth(1);
+		menuButtonBox.setDepth(1);
 
 		// Title
 		this.add
@@ -81,7 +85,13 @@ export class SettingsScene extends Scene {
 		const themes = ["Space", "Party", "Soccer", "Beach"];
 		const themeButtons = themes.map((theme, index) => {
 			const button = this.add
-				.rectangle(width / 2 + (index - 1) * 120, height / 3, 100, 40, 0x444444)
+				.rectangle(
+					width / 2 + (index - 1) * 120,
+					height / 3,
+					100,
+					40,
+					hexadecimalColors.menuButtonBg
+				)
 				.setInteractive({ useHandCursor: true });
 
 			const text = this.add
@@ -117,7 +127,7 @@ export class SettingsScene extends Scene {
 			.setDepth(1);
 
 		const soundToggle = this.add
-			.rectangle(width / 2, height / 2, 100, 40, 0x444444)
+			.rectangle(width / 2, height / 2, 100, 40, hexadecimalColors.menuButtonBg)
 			.setInteractive({ useHandCursor: true })
 			.setDepth(1);
 

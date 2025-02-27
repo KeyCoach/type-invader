@@ -29,19 +29,19 @@ export class LetterSelectScene extends Scene {
 		const menuHeight = 380;
 		const menuWidth = 480;
 
-		const menuBackground = this.add.graphics();
-		menuBackground.fillStyle(
-			hexadecimalColors.menuBackground,
-			alphaValues.menuBackground
+		const menuButtonBox = this.add.graphics();
+		menuButtonBox.fillStyle(
+			hexadecimalColors.menuButtonBox,
+			alphaValues.menuButtonBox
 		);
-		menuBackground.fillRoundedRect(
+		menuButtonBox.fillRoundedRect(
 			width / 2 - (menuWidth + horizontalPadding * 2) / 2, // x
 			height / 2 - (menuHeight + verticalPadding * 2) / 2 - 24, // y
 			menuWidth + horizontalPadding * 2,
 			menuHeight + verticalPadding * 2,
 			20 // border radius
 		);
-		menuBackground.setDepth(1);
+		menuButtonBox.setDepth(1);
 
 		// Title
 		this.add
@@ -73,7 +73,7 @@ export class LetterSelectScene extends Scene {
 			const y = startY + row * (buttonHeight + padding);
 
 			const letterButton = this.add
-				.rectangle(x, y, buttonWidth, buttonHeight, 0x444444)
+				.rectangle(x, y, buttonWidth, buttonHeight, hexadecimalColors.menuButtonBg)
 				.setInteractive({ useHandCursor: true });
 
 			const letterText = this.add
@@ -94,7 +94,7 @@ export class LetterSelectScene extends Scene {
 					letterText.setColor(colors.yellow);
 				})
 				.on("pointerout", () => {
-					letterButton.setFillStyle(0x444444);
+					letterButton.setFillStyle(hexadecimalColors.menuButtonBg);
 					letterText.setColor(colors.white);
 				})
 				.on("pointerdown", () => {

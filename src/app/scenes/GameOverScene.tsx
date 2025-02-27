@@ -35,19 +35,19 @@ export class GameOverScene extends Scene {
 		const menuHeight = 250;
 		const menuWidth = 400;
 
-		const menuBackground = this.add.graphics();
-		menuBackground.fillStyle(
-			hexadecimalColors.menuBackground,
-			alphaValues.menuBackground
+		const menuButtonBox = this.add.graphics();
+		menuButtonBox.fillStyle(
+			hexadecimalColors.menuButtonBox,
+			alphaValues.menuButtonBox
 		);
-		menuBackground.fillRoundedRect(
+		menuButtonBox.fillRoundedRect(
 			width / 2 - (menuWidth + horizontalPadding * 2) / 2, // x
 			height / 2 - (menuHeight + verticalPadding * 2) / 2, // y
 			menuWidth + horizontalPadding * 2,
 			menuHeight + verticalPadding * 2,
 			20 // border radius
 		);
-		menuBackground.setDepth(1);
+		menuButtonBox.setDepth(1);
 
 		this.add
 			.text(width / 2, height / 3, "GAME OVER", {
