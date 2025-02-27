@@ -11,6 +11,7 @@ interface ThemeAssets {
 		primary: number;
 		secondary: number;
 		highlight: number;
+		asteroidText: number;
 		menuBackground: number;
 	};
 }
@@ -41,6 +42,7 @@ export class ThemeManager {
 				primary: 0xf0f0f0,
 				secondary: 0x62de6d,
 				highlight: 0xebdf64,
+				asteroidText: 0xf0f0f0,
 				menuBackground: 0x000000,
 			},
 		},
@@ -54,6 +56,7 @@ export class ThemeManager {
 				primary: 0xffd700,
 				secondary: 0xff6b6b,
 				highlight: 0xe91e63,
+				asteroidText: 0x000000,
 				menuBackground: 0x332244,
 			},
 		},
@@ -67,6 +70,7 @@ export class ThemeManager {
 				primary: 0x000000,
 				secondary: 0xffffff,
 				highlight: 0x00ff00,
+				asteroidText: 0xfefefe,
 				menuBackground: 0x000000,
 			},
 		},
@@ -80,6 +84,7 @@ export class ThemeManager {
 				primary: 0x00ffff,
 				secondary: 0xffff00,
 				highlight: 0xffa500,
+				asteroidText: 0xfefefe,
 				menuBackground: 0x87ceeb,
 			},
 		},
@@ -172,6 +177,12 @@ export class ThemeManager {
 
 	getColor(key: keyof ThemeAssets["colors"]): number {
 		return this.themeAssets[this.currentTheme].colors[key];
+	}
+
+	getTextColor(key: keyof ThemeAssets["colors"]): string {
+		// Convert the numeric color to a hex string that Phaser text can use
+		const colorValue = this.themeAssets[this.currentTheme].colors[key];
+		return "#" + colorValue.toString(16).padStart(6, "0");
 	}
 
 	createBackground(): Phaser.GameObjects.Image | null {

@@ -18,6 +18,7 @@ const MULTIPLIER_THRESHOLDS = {
 interface Asteroid {
 	sprite: Phaser.GameObjects.Sprite;
 	text: Phaser.GameObjects.Text;
+	textBackground?: Phaser.GameObjects.Rectangle;
 	originalWord: string;
 	word: string;
 }
@@ -62,6 +63,33 @@ export class GameScene extends Scene {
 
 	constructor() {
 		super({ key: "GameScene" });
+	}
+
+	update() {
+		if (this.isPaused) return; // Stop all updates if paused
+
+		for (let i = this.asteroids.length - 1; i >= 0; i--) {
+			const asteroid = this.asteroids[i];
+			asteroid.sprite.y += this.asteroidSpeed;
+
+			// Adjust text y position based on theme
+			if (themeManager.getCurrentTheme() === "party") {
+				asteroid.text.y = asteroid.sprite.y - 110; // Keep text higher for balloons
+			} else {
+				asteroid.text.y = asteroid.sprite.y; // Default position for other themes
+			}
+
+			// Update background position to match text
+			if (asteroid.textBackground) {
+				asteroid.textBackground.x = asteroid.text.x;
+				asteroid.textBackground.y = asteroid.text.y;
+			}
+
+			if (asteroid.sprite.y > this.cameras.main.height) {
+				this.gameOver();
+				break;
+			}
+		}
 	}
 
 	private async loadWordsForLevel(
@@ -352,21 +380,6 @@ export class GameScene extends Scene {
 		});
 	}
 
-	update() {
-		if (this.isPaused) return; // Stop all updates if paused
-
-		for (let i = this.asteroids.length - 1; i >= 0; i--) {
-			const asteroid = this.asteroids[i];
-			asteroid.sprite.y += this.asteroidSpeed;
-			asteroid.text.y = asteroid.sprite.y;
-
-			if (asteroid.sprite.y > this.cameras.main.height) {
-				this.gameOver();
-				break;
-			}
-		}
-	}
-
 	private togglePause() {
 		this.isPaused = !this.isPaused;
 
@@ -476,14 +489,32 @@ export class GameScene extends Scene {
 		const word = this.getAsteroidWord();
 		const originalWord = word;
 
-		const text = this.createAsteroidText(x, word);
+		const { text, background } = this.createAsteroidText(x, word);
 		const sprite = this.createAsteroidSprite(x, text.width);
 
 		// Ensure the text appears on top of the asteroid
 		sprite.setDepth(1);
 		text.setDepth(2);
 
-		this.asteroids.push({ sprite, text, word, originalWord });
+		if (background) {
+			background.setDepth(1.5); // Make sure background is between sprite and text
+		}
+
+		// Create the asteroid object
+		const asteroid: Asteroid = {
+			sprite,
+			text,
+			originalWord,
+			word,
+		};
+
+		// Add the background if it exists
+		if (background) {
+			asteroid.textBackground = background;
+		}
+
+		// Push the asteroid object to the array
+		this.asteroids.push(asteroid);
 	}
 
 	private getAsteroidSpawnX(): number {
@@ -581,14 +612,13 @@ export class GameScene extends Scene {
 	): Phaser.GameObjects.Sprite {
 		const sprite = this.add.sprite(x, -50, themeManager.getAsset("asteroid"));
 
-		const baseSize = 2000; // Base size for the asteroid
+		const baseSize = 360; // Base size for the asteroid
 		const padding = 7; // Additional size to ensure sprite is bigger than text
 		const scale = (wordWidth + padding) / baseSize;
 		sprite.setScale(scale);
 
 		// Get the current animation type from the theme manager
 		const animationType = themeManager.getAsset("animation");
-    console.log(animationType);
 
 		// Apply different animations based on the theme
 		switch (animationType) {
@@ -608,11 +638,11 @@ export class GameScene extends Scene {
 
 			case "sway":
 				// Gentle swaying animation for balloons
-				const swayAmount = Phaser.Math.Between(5, 15);
-				const swaySpeed = Phaser.Math.Between(1500, 3000);
+				const swayAmount = Phaser.Math.Between(2, 5);
+				const swaySpeed = Phaser.Math.Between(2200, 3400);
 
 				this.tweens.add({
-					targets: sprite,
+					targets: sprite, // and text
 					x: {
 						value: x + swayAmount,
 						duration: swaySpeed,
@@ -637,16 +667,18 @@ export class GameScene extends Scene {
 				// Faster spin for soccer balls
 				this.tweens.add({
 					targets: sprite,
-					angle: sprite.angle + 720, // Two full rotations
-					duration: Phaser.Math.Between(1000, 2000),
+					angle: sprite.angle + 360,
+					duration: Phaser.Math.Between(4500, 5600),
 					repeat: -1,
 				});
 
 				// Add a slight horizontal wobble to simulate air resistance
+				const negativeWobble = Phaser.Math.Between(-5, -12);
+				const positiveWobble = Phaser.Math.Between(5, 12);
 				this.tweens.add({
 					targets: sprite,
 					x: {
-						value: x + Phaser.Math.Between(-20, 20),
+						value: x + Phaser.Math.Between(negativeWobble, positiveWobble),
 						duration: Phaser.Math.Between(800, 1500),
 						ease: "Sine.easeInOut",
 						yoyo: true,
@@ -657,8 +689,8 @@ export class GameScene extends Scene {
 
 			case "ride":
 				// Coconut falling with a wave-like motion
-				const waveAmount = Phaser.Math.Between(15, 30);
-				const waveDuration = Phaser.Math.Between(1200, 2500);
+				const waveAmount = Phaser.Math.Between(8, 16);
+				const waveDuration = Phaser.Math.Between(2600, 3400);
 
 				// Add wave-like horizontal motion
 				this.tweens.add({
@@ -694,15 +726,46 @@ export class GameScene extends Scene {
 		return sprite;
 	}
 
-	private createAsteroidText(x: number, word: string): Phaser.GameObjects.Text {
+	private createAsteroidText(
+		x: number,
+		word: string
+	): {
+		text: Phaser.GameObjects.Text;
+		background?: Phaser.GameObjects.Rectangle;
+	} {
+		// Use the getTextColor method to get the color as a string
+		const textColor = themeManager.getTextColor("asteroidText");
+
+		// Adjust Y position based on theme
+		const yPosition = themeManager.getCurrentTheme() === "party" ? -160 : -50;
+
 		const text = this.add
-			.text(x, -50, word, {
+			.text(x, yPosition, word, {
 				fontSize: "20px",
-				color: colors.white,
+				color: textColor,
 			})
 			.setOrigin(0.5);
 
-		return text;
+		// Create background for soccer theme
+		let background: Phaser.GameObjects.Rectangle | undefined;
+
+		if (themeManager.getCurrentTheme() === "soccer") {
+			// Create background (slightly larger than the text)
+			background = this.add.rectangle(
+				x,
+				yPosition,
+				text.width + 8,
+				text.height + 6,
+				0x111111,
+				0.8
+			);
+
+			// Set the background behind the text
+			background.setOrigin(0.5);
+			background.setDepth(text.depth - 1);
+		}
+
+		return { text, background };
 	}
 
 	private shootMissile(targetX: number, targetY: number) {
@@ -881,6 +944,12 @@ export class GameScene extends Scene {
 		// Remove asteroid
 		asteroid.sprite.destroy();
 		asteroid.text.destroy();
+
+		// Destroy the text background if it exists
+		if (asteroid.textBackground) {
+			asteroid.textBackground.destroy();
+		}
+
 		this.asteroids.splice(index, 1);
 
 		// Update score
