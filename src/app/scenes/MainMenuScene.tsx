@@ -38,24 +38,10 @@ export class MainMenuScene extends Scene {
 		this.navigation = new KeyboardNavigation(this).init();
 
 		// Create container background with alpha
-		const horizontalPadding = 80;
-		const verticalPadding = 40;
-		const menuHeight = 250;
-		const menuWidth = 400;
-
-		const menuButtonBox = this.add.graphics();
-		menuButtonBox.fillStyle(
-			hexadecimalColors.menuButtonBox,
-			alphaValues.menuButtonBox
-		);
-		menuButtonBox.fillRoundedRect(
-			width / 2 - (menuWidth + horizontalPadding * 2) / 2, // x
-			height / 2 - (menuHeight + verticalPadding * 2) / 2, // y
-			menuWidth + horizontalPadding * 2,
-			menuHeight + verticalPadding * 2,
-			20 // border radius
-		);
-		menuButtonBox.setDepth(1);
+		// const horizontalPadding = 80;
+		// const verticalPadding = 40;
+		// const menuHeight = 250;
+		// const menuWidth = 400;
 
 		// Title
 		this.add

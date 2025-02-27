@@ -4,6 +4,7 @@ import {
 	KeyboardNavigation,
 	NavigationItem,
 } from "../../utils/NavigationUtils";
+import { themeManager } from "@/game";
 
 export class LetterSelectScene extends Scene {
 	private navigation!: KeyboardNavigation;
@@ -15,33 +16,16 @@ export class LetterSelectScene extends Scene {
 	create() {
 		const { width, height } = this.cameras.main;
 
-		const background = this.add
-			.image(0, 0, "background")
-			.setOrigin(0, 0)
-			.setDisplaySize(width, height);
+		themeManager.setScene(this);
+		themeManager.createBackground();
+		themeManager.createMenuBackground();
 
 		// Initialize keyboard navigation
 		this.navigation = new KeyboardNavigation(this).init();
 
 		// Letters select screen container
-		const horizontalPadding = 80;
-		const verticalPadding = 40;
-		const menuHeight = 380;
-		const menuWidth = 480;
-
-		const menuButtonBox = this.add.graphics();
-		menuButtonBox.fillStyle(
-			hexadecimalColors.menuButtonBox,
-			alphaValues.menuButtonBox
-		);
-		menuButtonBox.fillRoundedRect(
-			width / 2 - (menuWidth + horizontalPadding * 2) / 2, // x
-			height / 2 - (menuHeight + verticalPadding * 2) / 2 - 24, // y
-			menuWidth + horizontalPadding * 2,
-			menuHeight + verticalPadding * 2,
-			20 // border radius
-		);
-		menuButtonBox.setDepth(1);
+		// const menuHeight = 380;
+		// const menuWidth = 480;
 
 		// Title
 		this.add

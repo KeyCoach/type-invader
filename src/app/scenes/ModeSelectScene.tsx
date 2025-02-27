@@ -4,6 +4,7 @@ import {
 	KeyboardNavigation,
 	NavigationItem,
 } from "../../utils/NavigationUtils";
+import { themeManager } from "@/game";
 
 export class ModeSelectScene extends Scene {
 	private navigation!: KeyboardNavigation;
@@ -15,38 +16,21 @@ export class ModeSelectScene extends Scene {
 	create() {
 		const { width, height } = this.cameras.main;
 
-		const background = this.add
-			.image(0, 0, "background")
-			.setOrigin(0, 0)
-			.setDisplaySize(width, height);
+		themeManager.setScene(this);
+		themeManager.createBackground();
+		themeManager.createMenuBackground();
 
 		// Initialize keyboard navigation
 		this.navigation = new KeyboardNavigation(this).init();
 
 		// Buttons container
-		const horizontalPadding = 80;
-		const verticalPadding = 40;
-		const menuHeight = 230;
-		const menuWidth = 400;
-
-		const menuButtonBox = this.add.graphics();
-		menuButtonBox.fillStyle(
-			hexadecimalColors.menuButtonBox,
-			alphaValues.menuButtonBox
-		);
-		menuButtonBox.fillRoundedRect(
-			width / 2 - (menuWidth + horizontalPadding * 2) / 2, // x
-			height / 2 - (menuHeight + verticalPadding * 2) / 2 - 48, // y
-			menuWidth + horizontalPadding * 2,
-			menuHeight + verticalPadding * 2,
-			20 // border radius
-		);
-		menuButtonBox.setDepth(1);
+		// const menuHeight = 230;
+		// const menuWidth = 400;
 
 		// Title
 		this.add
-			.text(width / 2, height / 4, "Select Game Mode", {
-				fontSize: "40px",
+			.text(width / 2, height / 2 - 80, "Select Game Mode", {
+				fontSize: "48px",
 				fontFamily: "Monospace",
 				color: colors.white,
 			})
@@ -55,7 +39,7 @@ export class ModeSelectScene extends Scene {
 
 		// Free Play button
 		const freePlayButton = this.add
-			.text(width / 2, height / 2 - 30, "Free Play", {
+			.text(width / 2, height / 2, "Free Play", {
 				fontSize: "32px",
 				fontFamily: "Monospace",
 				color: colors.green,
@@ -69,7 +53,7 @@ export class ModeSelectScene extends Scene {
 
 		// Letter Mode button
 		const letterModeButton = this.add
-			.text(width / 2, height / 2 + 30, "Letter Mode", {
+			.text(width / 2, height / 2 + 60, "Letter Mode", {
 				fontSize: "32px",
 				fontFamily: "Monospace",
 				color: colors.green,

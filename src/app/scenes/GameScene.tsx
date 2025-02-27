@@ -2,6 +2,7 @@ import { Scene } from "phaser";
 import { wordPool, wordPoolByLetterAndLength } from "../constants/wordPool";
 import { fetchWordsByLetterAndLength, extractWords } from "../constants/words-api";
 import { colors, hexadecimalColors } from "../constants/colors";
+import { themeManager } from "@/game";
 
 const MULTIPLIER_THRESHOLDS = {
     2: 30,
@@ -109,7 +110,9 @@ export class GameScene extends Scene {
 
     this.input.keyboard?.on("keydown-ESC", this.togglePause, this);
   
-    const background = this.add.image(width, height / 2, "background");
+    themeManager.setScene(this);
+		themeManager.createBackground();
+    
     this.ship = this.add.sprite(width / 2, height - 50, "ship").setScale(0.75);
   
     const scoreLabel = this.add.text(32, 520, "Score: ", {
