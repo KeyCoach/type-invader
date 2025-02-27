@@ -1,9 +1,5 @@
 import { Scene } from "phaser";
-import {
-	alphaValues,
-	colors,
-	hexadecimalColors,
-} from "../constants/colors";
+import { alphaValues, colors, hexadecimalColors } from "../constants/colors";
 import {
 	KeyboardNavigation,
 	NavigationItem,
@@ -221,8 +217,25 @@ export class SettingsScene extends Scene {
 
 	private setTheme(theme: GameSettings["theme"]) {
 		gameSettings.theme = theme;
-		// TODO: Implement theme change logic
-		console.log(`Theme changed to: ${theme}`);
+
+		themeManager.setTheme(theme);
+
+		const themes = ["Space", "Party", "Soccer", "Beach"];
+		const themeButtons = this.children.list.filter(
+			(obj) =>
+				obj instanceof Phaser.GameObjects.Text && themes.includes(obj.text)
+		);
+
+		themeButtons.forEach((button) => {
+			const text = button as Phaser.GameObjects.Text;
+			text.setColor(
+				gameSettings.theme === text.text.toLowerCase()
+					? colors.yellow
+					: colors.white
+			);
+		});
+
+		console.log(`Theme set to ${gameSettings.theme}`);
 	}
 
 	private toggleSound(soundText: Phaser.GameObjects.Text) {

@@ -90,7 +90,20 @@ export class ThemeManager {
 
 	setTheme(theme: GameTheme): void {
 		this.currentTheme = theme;
-		// If you need to immediately update the current scene, add refresh logic here
+		
+		if(this.scene) {
+			const backgroundObjects = this.scene.children.list.filter(
+				obj => obj instanceof Phaser.GameObjects.Image && ['blue-galaxy', 'party-background', 'soccer-field', 'beach-background'].includes(obj.texture.key)
+			);
+
+			if (backgroundObjects.length > 0) {
+				(backgroundObjects[0] as Phaser.GameObjects.Image).setTexture(this.getAsset('background'));
+			} else {
+				this.createBackground();
+			}
+		}
+
+		// TODO: update other theme specific assets later
 	}
 
 	getCurrentTheme(): GameTheme {
@@ -106,14 +119,17 @@ export class ThemeManager {
 	}
 
 	createBackground(): Phaser.GameObjects.Image | null {
-    if (!this.scene) return null;
-    
-    const { width, height } = this.scene.cameras.main;
-    return this.scene.add
-      .image(0, 0, this.getAsset('background'))
-      .setOrigin(0, 0)
-      .setDisplaySize(width, height);
-  }
+		if (!this.scene) return null;
+		
+		const { width, height } = this.scene.cameras.main;
+		const bg = this.scene.add
+			.image(width / 2, height / 2, this.getAsset('background'))
+			.setDisplaySize(width, height)
+		
+		bg.setDepth(-1);
+		
+		return bg;
+  	}
 
 	createMenuBackground(config: MenuConfig = {}): Phaser.GameObjects.Graphics | null {
 		if (!this.scene) return null;

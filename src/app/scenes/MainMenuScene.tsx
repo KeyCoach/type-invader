@@ -17,8 +17,14 @@ export class MainMenuScene extends Scene {
 	preload() {
 		this.load.image("asteroid", "/assets/img/sprite/asteroid.png");
 		this.load.image("particle", "/assets/img/sprite/particle.png");
-		this.load.image("background", "/assets/img/bg/blue-galaxy.png");
+		this.load.image("blue-galaxy", "/assets/img/space/blue-galaxy.png");
 		this.load.image("ship", "/assets/img/sprite/ship.png");
+
+		this.load.image("party-background", "/assets/img/party/party-bg.png");
+
+		this.load.image("soccer-field", "/assets/img/soccer/soccer-field.png");
+		
+		this.load.image("beach-background", "/assets/img/beach/beach-bg.png");
 	}
 
 	create() {
