@@ -1,6 +1,10 @@
 import { Scene } from "phaser";
-import { colors } from "../constants/colors";
-import { KeyboardNavigation, NavigationItem } from "../../utils/NavigationUtils";
+import { alphaValues, colors, hexadecimalColors } from "../constants/colors";
+import {
+	KeyboardNavigation,
+	NavigationItem,
+} from "../../utils/NavigationUtils";
+import { themeManager } from "@/game";
 
 export class ModeSelectScene extends Scene {
 	private navigation!: KeyboardNavigation;
@@ -12,26 +16,36 @@ export class ModeSelectScene extends Scene {
 	create() {
 		const { width, height } = this.cameras.main;
 
+		themeManager.setScene(this);
+		themeManager.createBackground();
+		themeManager.createMenuBackground();
+
 		// Initialize keyboard navigation
 		this.navigation = new KeyboardNavigation(this).init();
 
+		// Buttons container
+		// const menuHeight = 230;
+		// const menuWidth = 400;
+
 		// Title
 		this.add
-			.text(width / 2, height / 4, "Select Game Mode", {
-				fontSize: "40px",
+			.text(width / 2, height / 2 - 80, "Select Game Mode", {
+				fontSize: "48px",
 				fontFamily: "Monospace",
 				color: colors.white,
 			})
-			.setOrigin(0.5);
+			.setOrigin(0.5)
+			.setDepth(1);
 
 		// Free Play button
 		const freePlayButton = this.add
-			.text(width / 2, height / 2 - 30, "Free Play", {
+			.text(width / 2, height / 2, "Free Play", {
 				fontSize: "32px",
 				fontFamily: "Monospace",
 				color: colors.green,
 			})
 			.setOrigin(0.5)
+			.setDepth(1)
 			.setInteractive({ useHandCursor: true })
 			.on("pointerover", () => freePlayButton.setColor(colors.yellow))
 			.on("pointerout", () => freePlayButton.setColor(colors.green))
@@ -39,12 +53,13 @@ export class ModeSelectScene extends Scene {
 
 		// Letter Mode button
 		const letterModeButton = this.add
-			.text(width / 2, height / 2 + 30, "Letter Mode", {
+			.text(width / 2, height / 2 + 60, "Letter Mode", {
 				fontSize: "32px",
 				fontFamily: "Monospace",
 				color: colors.green,
 			})
 			.setOrigin(0.5)
+			.setDepth(1)
 			.setInteractive({ useHandCursor: true })
 			.on("pointerover", () => letterModeButton.setColor(colors.yellow))
 			.on("pointerout", () => letterModeButton.setColor(colors.green))
