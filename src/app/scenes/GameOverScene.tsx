@@ -1,3 +1,4 @@
+// GameOverScene.tsx
 import { Scene } from "phaser";
 import { alphaValues, colors, hexadecimalColors } from "../constants/colors";
 import {
@@ -10,13 +11,15 @@ export class GameOverScene extends Scene {
 	private score: number = 0;
 	private navigation!: KeyboardNavigation;
 	private nextStarTime: number = 0;
+	private stats: any = null;
 
 	constructor() {
 		super({ key: "GameOverScene" });
 	}
 
-	init(data: { score: number }) {
+	init(data: { score: number; stats?: any }) {
 		this.score = data.score;
+		this.stats = data.stats;
 	}
 
 	create() {
@@ -29,28 +32,91 @@ export class GameOverScene extends Scene {
 		// Initialize keyboard navigation
 		this.navigation = new KeyboardNavigation(this).init();
 
-		// Create container background with alpha
-		// const menuHeight = 250;
-		// const menuWidth = 400;
-
+		// Game Over title
 		this.add
-			.text(width / 2, height / 3, "GAME OVER", {
+			.text(width / 2, height / 5, "GAME OVER", {
 				fontSize: "42px",
 				color: colors.whiteText,
 			})
 			.setOrigin(0.5)
 			.setDepth(1);
 
+		// Score display
 		this.add
-			.text(width / 2, height / 2, `Final Score: ${this.score}`, {
-				fontSize: "24px",
+			.text(width / 2, height / 3, `Final Score: ${this.score}`, {
+				fontSize: "28px",
 				color: colors.whiteText,
 			})
 			.setOrigin(0.5)
 			.setDepth(1);
 
+		// Display typing statistics if available
+		if (this.stats) {
+			// Words Per Minute
+			this.add
+				.text(
+					width / 2,
+					height / 3 + 40,
+					`Words Per Minute: ${this.stats.wpm}`,
+					{
+						fontSize: "20px",
+						color: colors.whiteText,
+					}
+				)
+				.setOrigin(0.5)
+				.setDepth(1);
+
+			// Typing Accuracy
+			this.add
+				.text(width / 2, height / 3 + 70, `Accuracy: ${this.stats.accuracy}`, {
+					fontSize: "20px",
+					color: colors.whiteText,
+				})
+				.setOrigin(0.5)
+				.setDepth(1);
+
+			// Words Completed
+			this.add
+				.text(
+					width / 2,
+					height / 3 + 100,
+					`Words Completed: ${this.stats.wordsCompleted}`,
+					{
+						fontSize: "20px",
+						color: colors.whiteText,
+					}
+				)
+				.setOrigin(0.5)
+				.setDepth(1);
+
+			// Most Problematic Characters
+			if (
+				this.stats.mostProblematicChars &&
+				this.stats.mostProblematicChars.length > 0
+			) {
+				let errorText = "Most Challenging Keys: ";
+				this.stats.mostProblematicChars.forEach(
+					(char: [string, number], index: number) => {
+						errorText += `'${char[0]}' (${char[1]})`;
+						if (index < this.stats.mostProblematicChars.length - 1) {
+							errorText += ", ";
+						}
+					}
+				);
+
+				this.add
+					.text(width / 2, height / 3 + 130, errorText, {
+						fontSize: "18px",
+						color: colors.yellow,
+					})
+					.setOrigin(0.5)
+					.setDepth(1);
+			}
+		}
+
+		// Restart button
 		const restartText = this.add
-			.text(width / 2, (height * 2) / 3, "Click to Restart", {
+			.text(width / 2, (height * 3) / 4, "Click to Restart", {
 				fontSize: "24px",
 				color: colors.green,
 			})
