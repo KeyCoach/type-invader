@@ -1,5 +1,5 @@
 // ThemeManager.ts
-export type GameTheme = "space" | "party" | "soccer" | "beach";
+export type GameTheme = "space" | "birthday" | "soccer" | "beach";
 
 interface ThemeAssets {
 	background: string;
@@ -46,7 +46,7 @@ export class ThemeManager {
 				menuBackground: 0x000000,
 			},
 		},
-		party: {
+		birthday: {
 			background: "party-background",
 			asteroid: "balloon",
 			particle: "confetti",
@@ -232,7 +232,7 @@ export class ThemeManager {
 			case "space":
 				this.createShootingStar();
 				break;
-			case "party":
+			case "birthday":
 				this.createFloatingBalloon();
 				break;
 			case "soccer":
@@ -285,7 +285,7 @@ export class ThemeManager {
 	}
 
 	private createFloatingBalloon(): void {
-		// Party theme specific effect
+		// Birthday Party theme specific effect
 	}
 
 	private createBouncingBall(): void {

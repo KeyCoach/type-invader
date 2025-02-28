@@ -9,7 +9,7 @@ import { PauseScene } from "./app/scenes/PauseScene";
 import { SettingsScene } from "./app/scenes/SettingsScene";
 
 export interface GameSettings {
-	theme: "space" | "party" | "soccer" | "beach";
+	theme: "space" | "birthday" | "soccer" | "beach";
 	soundEnabled: boolean;
 	musicVolume: number;
 	sfxVolume: number;

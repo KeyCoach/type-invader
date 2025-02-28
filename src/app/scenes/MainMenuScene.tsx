@@ -22,7 +22,7 @@ export class MainMenuScene extends Scene {
 		this.load.image("blue-galaxy", "/assets/img/space/blue-galaxy.png");
 		this.load.image("asteroid", "/assets/img/space/asteroid.png");
 
-		// party
+		// birthday party
 		this.load.image("party-background", "/assets/img/party/party-bg.png");
 		this.load.image("balloon", "/assets/img/party/white-baloon.png");
 

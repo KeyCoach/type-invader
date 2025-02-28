@@ -2,10 +2,7 @@
 import { Scene } from "phaser";
 import { themeManager } from "@/game";
 import { colors, hexadecimalColors } from "../app/constants/colors";
-import {
-	fetchWordsByLetterAndLength,
-	fetchWordsForFreePlay,
-} from "../app/constants/words-api";
+import { fetchWords } from "../app/constants/wordsApi";
 
 interface Asteroid {
 	sprite: Phaser.GameObjects.Sprite;
@@ -42,6 +39,9 @@ export class GameMechanics {
 	private correctCharacters: number = 0;
 	private asteroidSpeed: number = 1;
 
+	private wordsByFirstLetter: Map<string, string[]> = new Map();
+	private availableLetters: string[] = [];
+
 	// Typing statistics
 	private typingStats = {
 		totalKeysPressed: 0,
@@ -75,10 +75,9 @@ export class GameMechanics {
 	}
 
 	// Initialize words based on the game mode
-	async init(mode: "free" | "letter", letter?: string, length: number = 5) {
+	async init(mode: "free" | "letter", letter?: string) {
 		this.mode = mode;
 		this.selectedLetter = letter;
-		this.length = length;
 		this.score = 0;
 		this.multiplier = 1;
 		this.correctCharacters = 0;
@@ -88,15 +87,40 @@ export class GameMechanics {
 
 		try {
 			if (mode === "free") {
-				this.wordPool = await fetchWordsForFreePlay(this.length);
+			  this.wordPool = await fetchWords();
 			} else if (mode === "letter" && letter) {
-				this.wordPool = await fetchWordsByLetterAndLength(letter, this.length);
+			  this.wordPool = await fetchWords(letter);
 			}
-		} catch (error) {
+			// Prepare the word pool by organizing words by first letter
+			this.prepareWordPool(this.wordPool);
+		  } catch (error) {
 			console.error("Error initializing word pool:", error);
-			this.wordPool = []; // Prevent crashes if API fails
-		}
+			this.wordPool = [];
+			this.prepareWordPool([]); // Initialize with empty pool
+		  }
 	}
+
+	// TODO; Figure out why E, U, and others have so few words with different starting letters
+	// method to prepare the word pool by organizing by first letter
+	private prepareWordPool(words: string[]) {
+		this.wordsByFirstLetter.clear();
+		
+		// Group words by their first letter
+		words.forEach(word => {
+		const firstLetter = word.charAt(0).toLowerCase();
+		
+		if (!this.wordsByFirstLetter.has(firstLetter)) {
+			this.wordsByFirstLetter.set(firstLetter, []);
+		}
+		
+		this.wordsByFirstLetter.get(firstLetter)!.push(word);
+		});
+		
+		// Create a list of available letters that have words
+		this.availableLetters = Array.from(this.wordsByFirstLetter.keys());
+		
+		console.log(`Prepared word pool with ${this.availableLetters.length} different starting letters`);
+  	}
 
 	// Typing statistics methods
 	resetTypingStats() {
@@ -183,72 +207,75 @@ export class GameMechanics {
 	increaseDifficulty() {
 		// Increase asteroid speed
 		this.asteroidSpeed = 1 + (this.level - 1) * 0.2; // Starts at 1 and increases
-
-		// Increase word length after every few levels
-		if (this.level % 3 === 0 && this.length < 10) {
-			this.length += 1; // Increase word length cap
-		}
 	}
 
 	// Asteroid management
 	spawnAsteroid() {
 		if (this.asteroids.length >= 5) {
-			return; // Don't exceed 5 asteroids at a time
+		  return; // Don't exceed 5 asteroids at a time
 		}
-
+	  
+		// Get a word with a unique starting letter
+		const word = this.getAsteroidWord();
+		
+		// If getAsteroidWord returns an empty string, it means we should skip
+		// spawning an asteroid at this time to maintain unique starting letters
+		if (!word) {
+		  return;
+		}
+	  
 		let x: number = 0,
-			y: number = 0;
+		  y: number = 0;
 		let safeSpawn: boolean;
 		const maxAttempts = 10; // Limit attempts to prevent infinite loops
 		let attempts = 0;
-
+	  
 		do {
-			x = this.getAsteroidSpawnX();
-			y = -50; // Spawn just above the screen
-			safeSpawn = this.asteroids.every(
-				(asteroid) =>
-					Phaser.Math.Distance.Between(
-						x,
-						y,
-						asteroid.sprite.x,
-						asteroid.sprite.y
-					) > 80
-			);
-			attempts++;
+		  x = this.getAsteroidSpawnX();
+		  y = -50; // Spawn just above the screen
+		  safeSpawn = this.asteroids.every(
+			(asteroid) =>
+			  Phaser.Math.Distance.Between(
+				x,
+				y,
+				asteroid.sprite.x,
+				asteroid.sprite.y
+			  ) > 80
+		  );
+		  attempts++;
 		} while (!safeSpawn && attempts < maxAttempts);
-
+	  
 		if (!safeSpawn) return; // If no safe spot found after max attempts, skip spawning
-
-		const word = this.getAsteroidWord();
+	  
 		const originalWord = word;
-
+	  
 		const { text, background } = this.createAsteroidText(x, word);
 		const sprite = this.createAsteroidSprite(x, text.width);
-
+	  
 		// Ensure the text appears on top of the asteroid
 		sprite.setDepth(1);
 		text.setDepth(2);
-
+	  
 		if (background) {
-			background.setDepth(1.5); // Make sure background is between sprite and text
+		  background.setDepth(1.5); // Make sure background is between sprite and text
 		}
-
+	  
 		// Create the asteroid object
 		const asteroid: Asteroid = {
-			sprite,
-			text,
-			originalWord,
-			word,
+		  sprite,
+		  text,
+		  originalWord,
+		  word,
 		};
-
+	  
 		// Add the background if it exists
 		if (background) {
-			asteroid.textBackground = background;
+		  asteroid.textBackground = background;
 		}
-
+	  
 		// Push the asteroid object to the array
 		this.asteroids.push(asteroid);
-	}
+	  }
 
 	clearAsteroids() {
 		// Destroy all existing asteroids when a new level starts
@@ -287,68 +314,47 @@ export class GameMechanics {
 
 	private getAsteroidWord(): string {
 		// Early check for empty word pool
-		if (!this.wordPool || this.wordPool.length === 0) {
-			console.warn("Word pool is empty! Attempting to refill...");
-			// Try to refill the word pool asynchronously
-			this.refillWordPool();
-			// Return a generic word as fallback
-			return ["asteroid", "meteor", "comet", "planet", "galaxy"][
-				Math.floor(Math.random() * 5)
-			];
+		if (this.availableLetters.length === 0) {
+		  console.warn("Word pool is empty! Using generic words instead");
+		  return ["asteroid", "meteor", "comet", "planet", "galaxy"][
+			Math.floor(Math.random() * 5)
+		  ];
 		}
-
-		// Get current letters in use to avoid duplicates
-		const currentStartLetters = this.asteroids.map((asteroid) =>
-			asteroid.word.charAt(0).toLowerCase()
+	  
+		// Get current first letters in use from all visible asteroids
+		const currentFirstLetters = this.asteroids.map((asteroid) =>
+		  asteroid.originalWord.charAt(0).toLowerCase()
 		);
-
-		// Try to find words that don't start with same letters as current asteroids
-		let availablePhrases = this.wordPool.filter(
-			(phrase) =>
-				!currentStartLetters.includes(phrase.charAt(0).toLowerCase()) &&
-				!this.asteroids.some((asteroid) => asteroid.word === phrase)
+	  
+		// Get letters that aren't currently in use
+		const unusedLetters = this.availableLetters.filter(
+		  letter => !currentFirstLetters.includes(letter)
 		);
-
-		// If we couldn't find any words with different starting letters,
-		// just exclude words that are already in use
-		if (availablePhrases.length === 0) {
-			availablePhrases = this.wordPool.filter(
-				(phrase) => !this.asteroids.some((asteroid) => asteroid.word === phrase)
-			);
+	  
+		// If we have unused letters, pick one and then pick a word starting with that letter
+		if (unusedLetters.length > 0) {
+		  // Choose a random unused letter
+		  const chosenLetter = unusedLetters[Math.floor(Math.random() * unusedLetters.length)];
+		  
+		  // Get all words starting with this letter
+		  const wordsWithLetter = this.wordsByFirstLetter.get(chosenLetter)!;
+		  
+		  // Pick a random word from this group
+		  return wordsWithLetter[Math.floor(Math.random() * wordsWithLetter.length)];
 		}
-
-		// If we still have no available words, shuffle the word pool and take any word
-		if (availablePhrases.length === 0) {
-			// Clone and shuffle the word pool
-			const shuffledPool = [...this.wordPool].sort(() => Math.random() - 0.5);
-			return shuffledPool[0];
+		
+		// If all available letters are in use (which should rarely happen with 26 letters)
+		// or we need a fallback, choose a word that's not currently on screen
+		const availableWords = this.wordPool.filter(
+		  word => !this.asteroids.some(asteroid => asteroid.originalWord === word)
+		);
+		
+		if (availableWords.length > 0) {
+		  return availableWords[Math.floor(Math.random() * availableWords.length)];
 		}
-
-		// Pick a random word from available phrases
-		return availablePhrases[
-			Math.floor(Math.random() * availablePhrases.length)
-		];
-	}
-
-	// Helper method to refill the word pool when it's depleted
-	private async refillWordPool() {
-		try {
-			if (this.mode === "free") {
-				const newWords = await fetchWordsForFreePlay(this.length);
-				// Add new words but avoid duplicates
-				this.wordPool = [...new Set([...this.wordPool, ...newWords])];
-			} else if (this.mode === "letter" && this.selectedLetter) {
-				const newWords = await fetchWordsByLetterAndLength(
-					this.selectedLetter,
-					this.length
-				);
-				// Add new words but avoid duplicates
-				this.wordPool = [...new Set([...this.wordPool, ...newWords])];
-			}
-			console.log(`Refilled word pool. New size: ${this.wordPool.length}`);
-		} catch (error) {
-			console.error("Failed to refill word pool:", error);
-		}
+		
+		// Last resort - use any word from the pool
+		return this.wordPool[Math.floor(Math.random() * this.wordPool.length)];
 	}
 
 	private createAsteroidSprite(
@@ -486,7 +492,7 @@ export class GameMechanics {
 		const textColor = themeManager.getTextColor("asteroidText");
 
 		// Adjust Y position based on theme
-		const yPosition = themeManager.getCurrentTheme() === "party" ? -110 : -50;
+		const yPosition = themeManager.getCurrentTheme() === "birthday" ? -110 : -50;
 
 		const text = this.scene.add
 			.text(x, yPosition, word, {
@@ -697,6 +703,13 @@ export class GameMechanics {
 		// Record word completion in statistics - assumes no errors if destroyed
 		this.recordWordAttempt(originalWord, 0);
 
+		// spawn new asteroid
+		this.scene.time.delayedCall(100, () => {
+			if (this.asteroids.length < 5) {
+			  this.spawnAsteroid();
+			}
+		});
+
 		return scoreResult;
 	}
 
@@ -707,7 +720,7 @@ export class GameMechanics {
 			asteroid.sprite.y += this.asteroidSpeed;
 
 			// Adjust text y position based on theme
-			if (themeManager.getCurrentTheme() === "party") {
+			if (themeManager.getCurrentTheme() === "birthday") {
 				asteroid.text.y = asteroid.sprite.y - 70; // Keep text higher for balloons
 			} else {
 				asteroid.text.y = asteroid.sprite.y; // Default position for other themes

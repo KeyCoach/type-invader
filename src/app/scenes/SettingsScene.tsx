@@ -66,7 +66,7 @@ export class SettingsScene extends Scene {
 			.setOrigin(0, 0.5)
 			.setDepth(1);
 
-		const themes = ["Space", "Party", "Soccer", "Beach"];
+		const themes = ["Space", "Birthday", "Soccer", "Beach"];
 		const themeButtons = themes.map((theme, index) => {
 			const button = this.add
 				.rectangle(
@@ -255,7 +255,7 @@ export class SettingsScene extends Scene {
 		const themeButtonsTexts = this.children.list.filter(
 			(obj) =>
 				obj instanceof Phaser.GameObjects.Text &&
-				["Space", "Party", "Soccer", "Beach"].includes(obj.text)
+				["Space", "Birthday", "Soccer", "Beach"].includes(obj.text)
 		) as Phaser.GameObjects.Text[];
 
 		// Update their colors based on the current theme
