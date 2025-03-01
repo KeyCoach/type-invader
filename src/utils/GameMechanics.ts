@@ -1,16 +1,8 @@
 // GameMechanics.ts
 import { Scene } from "phaser";
 import { themeManager } from "@/game";
-import { colors, hexadecimalColors } from "../app/constants/colors";
 import { fetchWords } from "../app/constants/wordsApi";
-
-interface Asteroid {
-	sprite: Phaser.GameObjects.Sprite;
-	text: Phaser.GameObjects.Text;
-	textBackground?: Phaser.GameObjects.Rectangle;
-	originalWord: string;
-	word: string;
-}
+import { Asteroid } from "../app/constants/definitions"
 
 const MULTIPLIER_THRESHOLDS = {
 	2: 30,

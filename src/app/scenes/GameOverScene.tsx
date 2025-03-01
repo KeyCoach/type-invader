@@ -1,25 +1,22 @@
 // GameOverScene.tsx
 import { Scene } from "phaser";
-import { alphaValues, colors, hexadecimalColors } from "../constants/colors";
-import {
-	KeyboardNavigation,
-	NavigationItem,
-} from "../../utils/NavigationUtils";
+import { colors, hexadecimalColors } from "../constants/colors";
+import { KeyboardNavigation } from "../../utils/NavigationUtils";
 import { themeManager } from "@/game";
 
 export class GameOverScene extends Scene {
 	private score: number = 0;
 	private navigation!: KeyboardNavigation;
 	private nextStarTime: number = 0;
-	private stats: any = null;
+	private stats: { wpm: number; accuracy: string; wordsCompleted: number; mostProblematicChars: [string, number][] } | null = null;
 
 	constructor() {
 		super({ key: "GameOverScene" });
 	}
 
-	init(data: { score: number; stats?: any }) {
+	init(data: { score: number; stats?: { wpm: number; accuracy: string; wordsCompleted: number; mostProblematicChars: [string, number][] } | null }) {
 		this.score = data.score;
-		this.stats = data.stats;
+		this.stats = data.stats ?? null;
 	}
 
 	create() {
@@ -98,7 +95,7 @@ export class GameOverScene extends Scene {
 				this.stats.mostProblematicChars.forEach(
 					(char: [string, number], index: number) => {
 						errorText += `'${char[0]}' (${char[1]})`;
-						if (index < this.stats.mostProblematicChars.length - 1) {
+						if (this.stats && index < this.stats.mostProblematicChars.length - 1) {
 							errorText += ", ";
 						}
 					}

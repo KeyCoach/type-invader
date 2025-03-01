@@ -1,10 +1,7 @@
 import { Scene } from "phaser";
 import { themeManager } from "@/game";
-import { alphaValues, colors, hexadecimalColors } from "../constants/colors";
-import {
-	KeyboardNavigation,
-	NavigationItem,
-} from "../../utils/NavigationUtils";
+import { colors, hexadecimalColors } from "../constants/colors";
+import { KeyboardNavigation } from "../../utils/NavigationUtils";
 
 export class MainMenuScene extends Scene {
 	private navigation!: KeyboardNavigation;
