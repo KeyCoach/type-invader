@@ -1,29 +1,5 @@
-// ThemeManager.ts
-export type GameTheme = "space" | "birthday" | "soccer" | "beach";
+import { GameTheme, ThemeAssets, MenuConfig } from '../app/constants/definitions'
 
-interface ThemeAssets {
-	background: string;
-	asteroid: string;
-	particle: string;
-	ship: string;
-	animation?: string;
-	colors: {
-		primary: number;
-		secondary: number;
-		highlight: number;
-		asteroidText: number;
-		menuBackground: number;
-	};
-}
-
-interface MenuConfig {
-	width?: number;
-	height?: number;
-	horizontalPadding?: number;
-	verticalPadding?: number;
-	borderRadius?: number;
-	alpha?: number;
-}
 
 export class ThemeManager {
 	private scene: Phaser.Scene | null = null;

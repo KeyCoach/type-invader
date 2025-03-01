@@ -1,12 +1,7 @@
 // NavigationUtils.ts
 import { Scene } from "phaser";
 import { colors } from "../app/constants/colors";
-
-export interface NavigationItem {
-	element: Phaser.GameObjects.GameObject;
-	position: { row: number; col: number };
-	onSelect?: () => void;
-}
+import { NavigationItem } from "../app/constants/definitions"
 
 export class KeyboardNavigation {
 	private scene: Scene;

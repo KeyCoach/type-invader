@@ -3,6 +3,7 @@ import { Scene } from "phaser";
 import { themeManager } from "@/game";
 import { GameMechanics } from "../../utils/GameMechanics";
 import { GameUI } from "../../utils/GameUI";
+import { MultiplierInfo } from "../constants/definitions"
 
 export class GameScene extends Scene {
 	private mode: "free" | "letter" = "free";
@@ -105,12 +106,12 @@ export class GameScene extends Scene {
 		}
 
 		// Update multiplier and progress bar display
-		const multiplierInfo = result.isCorrect
+		const multiplierInfo: MultiplierInfo = result.isCorrect
 			? this.mechanics.updateMultiplier()
 			: this.mechanics.resetMultiplierProgress();
 
 		// Check if multiplierChanged exists and is true, or if we're resetting the multiplier
-		if ((multiplierInfo as any).multiplierChanged || !result.isCorrect) {
+		if (multiplierInfo.multiplierChanged || !result.isCorrect) {
 			this.ui.updateMultiplier(multiplierInfo.multiplier, true);
 		}
 
@@ -146,7 +147,7 @@ export class GameScene extends Scene {
 
 		// Calculate spawn rate based on level
 		const level = this.mechanics.getLevel();
-		let spawnRate = Math.max(800, 2000 - level * 100);
+		const spawnRate = Math.max(800, 2000 - level * 100);
 
 		this.spawnTimer = this.time.addEvent({
 			delay: spawnRate,

@@ -1,5 +1,5 @@
 import { Game, Types } from "phaser";
-import { ThemeManager, GameTheme } from "./utils/ThemeManager";
+import { ThemeManager } from "./utils/ThemeManager";
 import { MainMenuScene } from "./app/scenes/MainMenuScene";
 import { GameScene } from "./app/scenes/GameScene";
 import { GameOverScene } from "./app/scenes/GameOverScene";
@@ -7,13 +7,8 @@ import { ModeSelectScene } from "./app/scenes/ModeSelectScene";
 import { LetterSelectScene } from "./app/scenes/LetterSelectScene";
 import { PauseScene } from "./app/scenes/PauseScene";
 import { SettingsScene } from "./app/scenes/SettingsScene";
+import { GameSettings } from "../src/app/constants/definitions"
 
-export interface GameSettings {
-	theme: "space" | "birthday" | "soccer" | "beach";
-	soundEnabled: boolean;
-	musicVolume: number;
-	sfxVolume: number;
-}
 
 export const gameSettings: GameSettings = {
 	theme: "space",
