@@ -1,5 +1,9 @@
-import { GameTheme, ThemeAssets, MenuConfig } from '../app/constants/definitions'
-
+import {
+	GameTheme,
+	ThemeAssets,
+	ButtonGroupConfig,
+} from "../app/constants/definitions";
+import { buttonGroupBackgroundSizes } from "../app/constants/buttonGroupBackgroundSizes";
 
 export class ThemeManager {
 	private scene: Phaser.Scene | null = null;
@@ -99,6 +103,8 @@ export class ThemeManager {
 			(obj) => obj instanceof Phaser.GameObjects.Graphics && obj.depth === 1
 		);
 
+		console.log("scene key: " + this.scene.scene.key);
+
 		if (typeof menuBackgrounds != "undefined" && menuBackgrounds.length > 0) {
 			const menuBg = menuBackgrounds[0] as Phaser.GameObjects.Graphics;
 			menuBg.clear();
@@ -173,31 +179,27 @@ export class ThemeManager {
 	}
 
 	createMenuBackground(
-		config: MenuConfig = {}
+		config: ButtonGroupConfig = {}
 	): Phaser.GameObjects.Graphics | null {
 		if (!this.scene) return null;
 
 		const { width, height } = this.scene.cameras.main;
-		const {
-			width: menuWidth = 400,
-			height: menuHeight = 250,
-			horizontalPadding = 80,
-			verticalPadding = 40,
-			borderRadius = 20,
-			alpha = 0.7,
-		} = config;
+
+		config = buttonGroupBackgroundSizes[this.scene.scene.key];
 
 		// TODO: refactor to use menuButtonBox naming
 		const menuBackground = this.scene.add.graphics();
+		const alpha = config.alpha || 0.7;
 		menuBackground.fillStyle(this.getColor("menuBackground"), alpha);
+
 		menuBackground.fillRoundedRect(
-			width / 2 - (menuWidth + horizontalPadding * 2) / 2,
-			height / 2 - (menuHeight + verticalPadding * 2) / 2,
-			menuWidth + horizontalPadding * 2,
-			menuHeight + verticalPadding * 2,
-			borderRadius
+			width / 2 - config.width! / 2 - config.horizontalPadding!,
+			height / 2 - config.height! / 2 - config.verticalPadding!,
+			config.width!,
+			config.height!,
+			config.borderRadius
 		);
-		menuBackground.setDepth(1);
+		menuBackground.setDepth(-0.5);
 
 		return menuBackground;
 	}

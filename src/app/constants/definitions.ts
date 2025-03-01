@@ -21,7 +21,7 @@ export interface ThemeAssets {
     };
 }
 
-export interface MenuConfig {
+export interface ButtonGroupConfig {
     width?: number;
     height?: number;
     horizontalPadding?: number;
