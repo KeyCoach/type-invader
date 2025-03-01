@@ -1,9 +1,15 @@
+import { buttonGroupBackgroundSizes } from "../app/constants/buttonGroupBackgroundSizes";
 import {
 	GameTheme,
 	ThemeAssets,
 	ButtonGroupConfig,
 } from "../app/constants/definitions";
-import { buttonGroupBackgroundSizes } from "../app/constants/buttonGroupBackgroundSizes";
+import {
+	ThemeAssetsDefinition,
+	ThemeImagesDefinition,
+	ThemeColorsDefinition,
+	ThemeSoundsDefinition,
+} from "../app/constants/themes";
 
 export class ThemeManager {
 	private scene: Phaser.Scene | null = null;
@@ -11,64 +17,7 @@ export class ThemeManager {
 	private currentTheme: GameTheme = "space";
 
 	// Define theme assets for each theme
-	private themeAssets: Record<GameTheme, ThemeAssets> = {
-		space: {
-			background: "blue-galaxy",
-			asteroid: "asteroid",
-			particle: "particle",
-			ship: "ship",
-			animation: "spin",
-			colors: {
-				primary: 0xf0f0f0,
-				secondary: 0x62de6d,
-				highlight: 0xebdf64,
-				asteroidText: 0xf0f0f0,
-				menuBackground: 0x000000,
-			},
-		},
-		birthday: {
-			background: "party-background",
-			asteroid: "balloon",
-			particle: "confetti",
-			ship: "party-hat",
-			animation: "sway",
-			colors: {
-				primary: 0xffd700,
-				secondary: 0xff6b6b,
-				highlight: 0xe91e63,
-				asteroidText: 0x000000,
-				menuBackground: 0x332244,
-			},
-		},
-		soccer: {
-			background: "soccer-field",
-			asteroid: "soccer-ball",
-			particle: "soccer-ball",
-			ship: "soccer-player",
-			animation: "kick",
-			colors: {
-				primary: 0x000000,
-				secondary: 0xffffff,
-				highlight: 0x00ff00,
-				asteroidText: 0xfefefe,
-				menuBackground: 0x000000,
-			},
-		},
-		beach: {
-			background: "beach-background",
-			asteroid: "coconut",
-			particle: "water-splash",
-			ship: "surfboard",
-			animation: "ride",
-			colors: {
-				primary: 0x00ffff,
-				secondary: 0xffff00,
-				highlight: 0xffa500,
-				asteroidText: 0xfefefe,
-				menuBackground: 0x87ceeb,
-			},
-		},
-	};
+	private themeAssets: Record<GameTheme, ThemeAssets> = ThemeAssetsDefinition;
 
 	constructor() {}
 
@@ -150,21 +99,25 @@ export class ThemeManager {
 		return this.currentTheme;
 	}
 
-	getAsset(key: keyof ThemeAssets): string {
+	getAsset(key: keyof ThemeImagesDefinition): string {
 		if (key === "animation") {
-			return this.themeAssets[this.currentTheme][key] as string;
+			return this.themeAssets[this.currentTheme].images[key] as string;
 		}
-		return this.themeAssets[this.currentTheme][key] as string;
+		return this.themeAssets[this.currentTheme].images[key];
 	}
 
-	getColor(key: keyof ThemeAssets["colors"]): number {
+	getColor(key: keyof ThemeColorsDefinition): number {
 		return this.themeAssets[this.currentTheme].colors[key];
 	}
 
-	getTextColor(key: keyof ThemeAssets["colors"]): string {
+	getTextColor(key: keyof ThemeColorsDefinition): string {
 		// Convert the numeric color to a hex string that Phaser text can use
 		const colorValue = this.themeAssets[this.currentTheme].colors[key];
 		return "#" + colorValue.toString(16).padStart(6, "0");
+	}
+
+	getSound(key: keyof ThemeSoundsDefinition): string {
+		return this.themeAssets[this.currentTheme].sounds[key];
 	}
 
 	createBackground(): Phaser.GameObjects.Image | null {

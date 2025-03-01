@@ -21,7 +21,7 @@ export class MainMenuScene extends Scene {
 
 		// birthday party
 		this.load.image("party-background", "/assets/img/party/party-bg.png");
-		this.load.image("balloon", "/assets/img/party/white-baloon.png");
+		this.load.image("balloon", "/assets/img/party/white-balloon.png");
 
 		// soccer
 		this.load.image("soccer-field", "/assets/img/soccer/soccer-field.png");
