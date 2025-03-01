@@ -2,7 +2,7 @@
 import { Scene } from "phaser";
 import { themeManager } from "@/game";
 import { fetchWords } from "../app/constants/wordsApi";
-import { Asteroid } from "../app/constants/definitions"
+import { Asteroid } from "../app/constants/definitions";
 
 const MULTIPLIER_THRESHOLDS = {
 	2: 30,
@@ -79,40 +79,42 @@ export class GameMechanics {
 
 		try {
 			if (mode === "free") {
-			  this.wordPool = await fetchWords();
+				this.wordPool = await fetchWords();
 			} else if (mode === "letter" && letter) {
-			  this.wordPool = await fetchWords(letter);
+				this.wordPool = await fetchWords(letter);
 			}
 			// Prepare the word pool by organizing words by first letter
 			this.prepareWordPool(this.wordPool);
-		  } catch (error) {
+		} catch (error) {
 			console.error("Error initializing word pool:", error);
 			this.wordPool = [];
 			this.prepareWordPool([]); // Initialize with empty pool
-		  }
+		}
 	}
 
 	// TODO; Figure out why E, U, and others have so few words with different starting letters
 	// method to prepare the word pool by organizing by first letter
 	private prepareWordPool(words: string[]) {
 		this.wordsByFirstLetter.clear();
-		
+
 		// Group words by their first letter
-		words.forEach(word => {
-		const firstLetter = word.charAt(0).toLowerCase();
-		
-		if (!this.wordsByFirstLetter.has(firstLetter)) {
-			this.wordsByFirstLetter.set(firstLetter, []);
-		}
-		
-		this.wordsByFirstLetter.get(firstLetter)!.push(word);
+		words.forEach((word) => {
+			const firstLetter = word.charAt(0).toLowerCase();
+
+			if (!this.wordsByFirstLetter.has(firstLetter)) {
+				this.wordsByFirstLetter.set(firstLetter, []);
+			}
+
+			this.wordsByFirstLetter.get(firstLetter)!.push(word);
 		});
-		
+
 		// Create a list of available letters that have words
 		this.availableLetters = Array.from(this.wordsByFirstLetter.keys());
-		
-		console.log(`Prepared word pool with ${this.availableLetters.length} different starting letters`);
-  	}
+
+		console.log(
+			`Prepared word pool with ${this.availableLetters.length} different starting letters`
+		);
+	}
 
 	// Typing statistics methods
 	resetTypingStats() {
@@ -204,70 +206,70 @@ export class GameMechanics {
 	// Asteroid management
 	spawnAsteroid() {
 		if (this.asteroids.length >= 5) {
-		  return; // Don't exceed 5 asteroids at a time
+			return; // Don't exceed 5 asteroids at a time
 		}
-	  
+
 		// Get a word with a unique starting letter
 		const word = this.getAsteroidWord();
-		
+
 		// If getAsteroidWord returns an empty string, it means we should skip
 		// spawning an asteroid at this time to maintain unique starting letters
 		if (!word) {
-		  return;
+			return;
 		}
-	  
+
 		let x: number = 0,
-		  y: number = 0;
+			y: number = 0;
 		let safeSpawn: boolean;
 		const maxAttempts = 10; // Limit attempts to prevent infinite loops
 		let attempts = 0;
-	  
+
 		do {
-		  x = this.getAsteroidSpawnX();
-		  y = -50; // Spawn just above the screen
-		  safeSpawn = this.asteroids.every(
-			(asteroid) =>
-			  Phaser.Math.Distance.Between(
-				x,
-				y,
-				asteroid.sprite.x,
-				asteroid.sprite.y
-			  ) > 80
-		  );
-		  attempts++;
+			x = this.getAsteroidSpawnX();
+			y = -50; // Spawn just above the screen
+			safeSpawn = this.asteroids.every(
+				(asteroid) =>
+					Phaser.Math.Distance.Between(
+						x,
+						y,
+						asteroid.sprite.x,
+						asteroid.sprite.y
+					) > 80
+			);
+			attempts++;
 		} while (!safeSpawn && attempts < maxAttempts);
-	  
+
 		if (!safeSpawn) return; // If no safe spot found after max attempts, skip spawning
-	  
+
 		const originalWord = word;
-	  
+
 		const { text, background } = this.createAsteroidText(x, word);
 		const sprite = this.createAsteroidSprite(x, text.width);
-	  
+
 		// Ensure the text appears on top of the asteroid
 		sprite.setDepth(1);
 		text.setDepth(2);
-	  
+
 		if (background) {
-		  background.setDepth(1.5); // Make sure background is between sprite and text
+			background.setDepth(1.5); // Make sure background is between sprite and text
 		}
-	  
+
 		// Create the asteroid object
 		const asteroid: Asteroid = {
-		  sprite,
-		  text,
-		  originalWord,
-		  word,
+			sprite,
+			text,
+			originalWord,
+			word,
 		};
-	  
+
 		// Add the background if it exists
 		if (background) {
-		  asteroid.textBackground = background;
+			asteroid.textBackground = background;
 		}
-	  
+
 		// Push the asteroid object to the array
 		this.asteroids.push(asteroid);
-	  }
+	}
 
 	clearAsteroids() {
 		// Destroy all existing asteroids when a new level starts
@@ -307,44 +309,48 @@ export class GameMechanics {
 	private getAsteroidWord(): string {
 		// Early check for empty word pool
 		if (this.availableLetters.length === 0) {
-		  console.warn("Word pool is empty! Using generic words instead");
-		  return ["asteroid", "meteor", "comet", "planet", "galaxy"][
-			Math.floor(Math.random() * 5)
-		  ];
+			console.warn("Word pool is empty! Using generic words instead");
+			return ["asteroid", "meteor", "comet", "planet", "galaxy"][
+				Math.floor(Math.random() * 5)
+			];
 		}
-	  
+
 		// Get current first letters in use from all visible asteroids
 		const currentFirstLetters = this.asteroids.map((asteroid) =>
-		  asteroid.originalWord.charAt(0).toLowerCase()
+			asteroid.originalWord.charAt(0).toLowerCase()
 		);
-	  
+
 		// Get letters that aren't currently in use
 		const unusedLetters = this.availableLetters.filter(
-		  letter => !currentFirstLetters.includes(letter)
+			(letter) => !currentFirstLetters.includes(letter)
 		);
-	  
+
 		// If we have unused letters, pick one and then pick a word starting with that letter
 		if (unusedLetters.length > 0) {
-		  // Choose a random unused letter
-		  const chosenLetter = unusedLetters[Math.floor(Math.random() * unusedLetters.length)];
-		  
-		  // Get all words starting with this letter
-		  const wordsWithLetter = this.wordsByFirstLetter.get(chosenLetter)!;
-		  
-		  // Pick a random word from this group
-		  return wordsWithLetter[Math.floor(Math.random() * wordsWithLetter.length)];
+			// Choose a random unused letter
+			const chosenLetter =
+				unusedLetters[Math.floor(Math.random() * unusedLetters.length)];
+
+			// Get all words starting with this letter
+			const wordsWithLetter = this.wordsByFirstLetter.get(chosenLetter)!;
+
+			// Pick a random word from this group
+			return wordsWithLetter[
+				Math.floor(Math.random() * wordsWithLetter.length)
+			];
 		}
-		
+
 		// If all available letters are in use (which should rarely happen with 26 letters)
 		// or we need a fallback, choose a word that's not currently on screen
 		const availableWords = this.wordPool.filter(
-		  word => !this.asteroids.some(asteroid => asteroid.originalWord === word)
+			(word) =>
+				!this.asteroids.some((asteroid) => asteroid.originalWord === word)
 		);
-		
+
 		if (availableWords.length > 0) {
-		  return availableWords[Math.floor(Math.random() * availableWords.length)];
+			return availableWords[Math.floor(Math.random() * availableWords.length)];
 		}
-		
+
 		// Last resort - use any word from the pool
 		return this.wordPool[Math.floor(Math.random() * this.wordPool.length)];
 	}
@@ -359,9 +365,9 @@ export class GameMechanics {
 			themeManager.getAsset("asteroid")
 		);
 
-		const baseSize = 360; // Base size for the asteroid
+		const baseSizeScalar = 360; // Base size for the asteroid
 		const padding = 7; // Additional size to ensure sprite is bigger than text
-		const scale = (wordWidth + padding) / baseSize;
+		const scale = (wordWidth + padding) / baseSizeScalar;
 		sprite.setScale(scale);
 
 		// Get the current animation type from the theme manager
@@ -483,8 +489,40 @@ export class GameMechanics {
 		// Use the getTextColor method to get the color as a string
 		const textColor = themeManager.getTextColor("asteroidText");
 
-		// Adjust Y position based on theme
-		const yPosition = themeManager.getCurrentTheme() === "birthday" ? -110 : -50;
+		// Get the current theme
+		const currentTheme = themeManager.getCurrentTheme();
+
+		// Default spawn position above screen
+		let yPosition = currentTheme === "birthday" ? -100 : -50;
+
+		if (currentTheme === "birthday") {
+			const tempText = this.scene.add.text(0, 0, word, { fontSize: "20px" });
+			const wordWidth = tempText.width;
+			tempText.destroy();
+
+			const baseSize = 360; // Base size for the sprite
+			const padding = 7; // Padding for text
+			const scale = (wordWidth + padding) / baseSize;
+
+			// The balloon's natural height before scaling
+			const naturalSpriteHeight = 360; // Adjust to your actual sprite height
+
+			// The scaled height of the sprite
+			const scaledSpriteHeight = naturalSpriteHeight * scale;
+
+			// The widest point is 28.74% above the middle, or 21.26% from the top
+			const widestPointFromTop = 0.2126;
+
+			// Calculate position relative to sprite's center (where sprite.y points to)
+			// First find the distance from top to widest point
+			const distanceFromTop = scaledSpriteHeight * widestPointFromTop;
+
+			// Then calculate offset from center (which is at 50% height)
+			const offsetFromCenter = scaledSpriteHeight / 2 - distanceFromTop;
+
+			// Apply the offset to the sprite's initial position
+			yPosition = -50 - offsetFromCenter;
+		}
 
 		const text = this.scene.add
 			.text(x, yPosition, word, {
@@ -493,11 +531,9 @@ export class GameMechanics {
 			})
 			.setOrigin(0.5);
 
-		// Create background for soccer theme
+		// Create background for soccer theme (unchanged)
 		let background: Phaser.GameObjects.Rectangle | undefined;
-
-		if (themeManager.getCurrentTheme() === "soccer") {
-			// Create background (slightly larger than the text)
+		if (currentTheme === "soccer") {
 			background = this.scene.add.rectangle(
 				x,
 				yPosition,
@@ -506,8 +542,6 @@ export class GameMechanics {
 				0x111111,
 				0.8
 			);
-
-			// Set the background behind the text
 			background.setOrigin(0.5);
 			background.setDepth(text.depth - 1);
 		}
@@ -698,7 +732,7 @@ export class GameMechanics {
 		// spawn new asteroid
 		this.scene.time.delayedCall(100, () => {
 			if (this.asteroids.length < 5) {
-			  this.spawnAsteroid();
+				this.spawnAsteroid();
 			}
 		});
 
@@ -711,11 +745,24 @@ export class GameMechanics {
 			const asteroid = this.asteroids[i];
 			asteroid.sprite.y += this.asteroidSpeed;
 
-			// Adjust text y position based on theme
+			// Calculate offsetFromCenter for birthday theme
+			let offsetFromCenter = 0;
+
 			if (themeManager.getCurrentTheme() === "birthday") {
-				asteroid.text.y = asteroid.sprite.y - 70; // Keep text higher for balloons
+				// Get the scale of the sprite
+				const scale = asteroid.sprite.scaleX;
+
+				const naturalSpriteHeight = 360;
+				const scaledSpriteHeight = naturalSpriteHeight * scale;
+				const widestPointFromTop = 0.2126;
+				const distanceFromTop = scaledSpriteHeight * widestPointFromTop;
+				offsetFromCenter = scaledSpriteHeight / 2 - distanceFromTop;
+
+				// Position the text at the widest point
+				asteroid.text.y = asteroid.sprite.y - offsetFromCenter;
 			} else {
-				asteroid.text.y = asteroid.sprite.y; // Default position for other themes
+				// Default position for other themes
+				asteroid.text.y = asteroid.sprite.y;
 			}
 
 			// Update background position to match text
@@ -724,8 +771,16 @@ export class GameMechanics {
 				asteroid.textBackground.y = asteroid.text.y;
 			}
 
-			// Check if any asteroid has passed the bottom of the screen
-			if (asteroid.sprite.y > this.scene.cameras.main.height) {
+			// Check if any asteroid's text has passed the bottom of the screen
+			// For birthday theme, we use the text position
+			// For other themes, we use the sprite position plus a small offset to account for sprite height
+			const effectiveY =
+				themeManager.getCurrentTheme() === "birthday"
+					? asteroid.text.y + asteroid.text.height / 2 // Bottom of text (accounting for origin 0.5)
+					: asteroid.sprite.y +
+					  (asteroid.sprite.height * asteroid.sprite.scaleY) / 2; // Bottom of sprite
+
+			if (effectiveY > this.scene.cameras.main.height) {
 				return false; // Game over condition
 			}
 		}
