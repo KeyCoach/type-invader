@@ -269,9 +269,6 @@ export class SettingsScene extends Scene {
 			);
 		});
 
-		console.log(`Theme set to ${gameSettings.theme}`);
-
-		// Restart the scene to apply theme changes including sounds
 		this.scene.restart();
 	}
 

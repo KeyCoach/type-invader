@@ -108,8 +108,6 @@ export class GameScene extends Scene {
 
 			// If an asteroid was destroyed, update score display and play explosion
 			if (result.destroyedAsteroid) {
-				// Play explosion sound
-				console.log("Attempting to play explosion sound");
 				soundManager.playExplosion();
 
 				const scoreResult = this.mechanics.getScore();
