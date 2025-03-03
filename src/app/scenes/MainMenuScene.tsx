@@ -19,12 +19,12 @@ export class MainMenuScene extends Scene {
 		this.load.image("blue-galaxy", "/assets/img/space/blue-galaxy.png");
 		this.load.image("asteroid", "/assets/img/space/asteroid.png");
 		this.load.audio("space-theme", "/assets/audio/space/theme.mp3");
-		this.load.audio("space-explosion", "/assets/audio/space/explosion.mp3");
+		this.load.audio("space-explosion", "/assets/audio/space/explosion.m4a");
 
 		// birthday party
 		this.load.image("party-background", "/assets/img/party/party-bg.png");
 		this.load.image("balloon", "/assets/img/party/white-balloon.png");
-		this.load.audio("party-theme", "/assets/audio/party/theme.mp3");
+		// this.load.audio("party-theme", "/assets/audio/party/theme.mp3");
 		this.load.audio("party-explosion", "/assets/audio/party/explosion.mp3");
 
 		// soccer
@@ -39,17 +39,11 @@ export class MainMenuScene extends Scene {
 		this.load.audio("beach-theme", "/assets/audio/beach/theme.mp3");
 		this.load.audio("beach-explosion", "/assets/audio/beach/explosion.m4a");
 
-		// Add game music if needed separately from theme music
-		this.load.audio("space-game", "/assets/audio/space/game.mp3");
-		this.load.audio("party-game", "/assets/audio/party/game.mp3");
-		this.load.audio("soccer-game", "/assets/audio/soccer/game.mp3");
-		this.load.audio("beach-game", "/assets/audio/beach/game.mp3");
+		// TODO: Add game music for the menu screens
+		// this.load.audio("menu-music", "/assets/audio/menu.mp3");
 
-		// Optional: Add missile sound effects
-		this.load.audio("space-missile", "/assets/audio/space/missile.mp3");
-		this.load.audio("party-missile", "/assets/audio/party/missile.mp3");
-		this.load.audio("soccer-missile", "/assets/audio/soccer/missile.mp3");
-		this.load.audio("beach-missile", "/assets/audio/beach/missile.mp3");
+		// TOD: Add missile sound effects by theme
+		// this.load.audio("{theme}-missile", "/assets/audio/theme/missile.mp3");
 	}
 
 	create() {

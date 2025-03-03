@@ -2,7 +2,6 @@
 import { Scene } from "phaser";
 import { gameSettings } from "@/game";
 import { ThemeManager } from "./ThemeManager";
-import { GameTheme } from "../app/constants/definitions";
 
 export class SoundManager {
 	private scene: Scene | null = null;
@@ -40,7 +39,8 @@ export class SoundManager {
 
 			const explosionSound = this.sounds.get(soundKey);
 			if (explosionSound) {
-				explosionSound.setVolume(gameSettings.sfxVolume);
+				// Cast to any to bypass TypeScript limitations with Phaser sound
+				(explosionSound as any).setVolume(gameSettings.sfxVolume);
 				explosionSound.play();
 			}
 		} catch (error) {
@@ -53,7 +53,8 @@ export class SoundManager {
 		if (!this.scene || !gameSettings.soundEnabled) return;
 
 		const theme = this.themeManager.getCurrentTheme();
-		const musicKey = musicType === "theme" ? `${theme}-theme` : `${theme}-game`;
+		const musicKey =
+			musicType === "theme" ? `${theme}-theme` : `${theme}-theme`;
 
 		try {
 			// Stop previous music if playing
@@ -81,17 +82,24 @@ export class SoundManager {
 
 		try {
 			if (!this.sounds.has(soundKey)) {
-				// Fallback to explosion if missile sound doesn't exist
-				const actualKey = this.scene.sound.get(soundKey)
-					? soundKey
-					: `${theme}-explosion`;
+				// Check if the missile sound exists, fallback to explosion if not
+				let actualKey = soundKey;
+				try {
+					if (!this.scene.sound.get(soundKey)) {
+						actualKey = `${theme}-explosion`;
+					}
+				} catch (error) {
+					actualKey = `${theme}-explosion`;
+				}
+
 				const sound = this.scene.sound.add(actualKey);
 				this.sounds.set(soundKey, sound);
 			}
 
 			const missileSound = this.sounds.get(soundKey);
 			if (missileSound) {
-				missileSound.setVolume(gameSettings.sfxVolume * 0.5); // Lower volume for missile
+				// Cast to any to bypass TypeScript limitations with Phaser sound
+				(missileSound as any).setVolume(gameSettings.sfxVolume * 0.5); // Lower volume for missile
 				missileSound.play();
 			}
 		} catch (error) {
@@ -116,14 +124,17 @@ export class SoundManager {
 	// Update volume levels based on settings
 	updateVolumes(): void {
 		if (this.bgMusic) {
-			this.bgMusic.setVolume(gameSettings.musicVolume);
+			// Cast to any to bypass TypeScript limitations with Phaser sound
+			(this.bgMusic as any).setVolume(gameSettings.musicVolume);
 		}
 
 		this.sounds.forEach((sound) => {
 			if (sound.key.includes("missile")) {
-				sound.setVolume(gameSettings.sfxVolume * 0.5);
+				// Cast to any to bypass TypeScript limitations with Phaser sound
+				(sound as any).setVolume(gameSettings.sfxVolume * 0.5);
 			} else {
-				sound.setVolume(gameSettings.sfxVolume);
+				// Cast to any to bypass TypeScript limitations with Phaser sound
+				(sound as any).setVolume(gameSettings.sfxVolume);
 			}
 		});
 	}
