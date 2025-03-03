@@ -14,7 +14,7 @@ export const gameSettings: GameSettings = {
 	theme: "space",
 	musicVolume: 0.5,
 	sfxVolume: 0.5,
-	soundEnabled: false,
+	soundEnabled: true,
 };
 
 export const themeManager = new ThemeManager();

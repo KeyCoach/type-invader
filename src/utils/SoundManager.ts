@@ -26,25 +26,46 @@ export class SoundManager {
 
 	// Play explosion sound when asteroid is destroyed
 	playExplosion(): void {
-		if (!this.scene || !gameSettings.soundEnabled) return;
+		console.log(
+			"playExplosion called, scene:",
+			!!this.scene,
+			"sound enabled:",
+			gameSettings.soundEnabled
+		);
+
+		if (!this.scene) {
+			console.log("No scene set in SoundManager");
+			return;
+		}
+
+		if (!gameSettings.soundEnabled) {
+			console.log("Sound is disabled in game settings");
+			return;
+		}
 
 		const theme = this.themeManager.getCurrentTheme();
 		const soundKey = `${theme}-explosion`;
 
+		console.log(`Playing explosion sound: ${soundKey}`);
+
 		try {
 			if (!this.sounds.has(soundKey)) {
+				console.log(`Adding ${soundKey} to sound collection`);
 				const sound = this.scene.sound.add(soundKey);
 				this.sounds.set(soundKey, sound);
+				console.log(`Added ${theme} explosion sound`);
 			}
 
 			const explosionSound = this.sounds.get(soundKey);
+			console.log(`Explosion sound: ${explosionSound}`);
 			if (explosionSound) {
 				// Cast to any to bypass TypeScript limitations with Phaser sound
 				(explosionSound as any).setVolume(gameSettings.sfxVolume);
 				explosionSound.play();
+				console.log(`${theme} explosion sound played`);
 			}
 		} catch (error) {
-			console.error(`Error playing explosion sound: ${error}`);
+			console.error(`Error playing explosion sound:`, error);
 		}
 	}
 
@@ -53,8 +74,7 @@ export class SoundManager {
 		if (!this.scene || !gameSettings.soundEnabled) return;
 
 		const theme = this.themeManager.getCurrentTheme();
-		const musicKey =
-			musicType === "theme" ? `${theme}-theme` : `${theme}-theme`;
+		const musicKey = musicType === "theme" ? `${theme}-theme` : `${theme}-game`;
 
 		try {
 			// Stop previous music if playing
@@ -141,6 +161,8 @@ export class SoundManager {
 
 	// Toggle sound on/off
 	toggleSound(enabled: boolean): void {
+		console.log(`Toggling sound: ${enabled ? "ON" : "OFF"}`);
+
 		if (!enabled) {
 			this.stopAll();
 		} else if (this.scene) {

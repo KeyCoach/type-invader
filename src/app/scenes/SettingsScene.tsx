@@ -280,6 +280,10 @@ export class SettingsScene extends Scene {
 		soundText.setText(gameSettings.soundEnabled ? "ON" : "OFF");
 		soundText.setColor(gameSettings.soundEnabled ? colors.green : colors.red);
 
+		console.log(
+			`Sound toggled to ${gameSettings.soundEnabled ? "enabled" : "disabled"}`
+		);
+
 		// Update sound manager
 		soundManager.toggleSound(gameSettings.soundEnabled);
 

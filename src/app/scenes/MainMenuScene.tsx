@@ -25,7 +25,7 @@ export class MainMenuScene extends Scene {
 		this.load.image("party-background", "/assets/img/party/party-bg.png");
 		this.load.image("balloon", "/assets/img/party/white-balloon.png");
 		// this.load.audio("party-theme", "/assets/audio/party/theme.mp3");
-		this.load.audio("party-explosion", "/assets/audio/party/explosion.mp3");
+		this.load.audio("birthday-explosion", "/assets/audio/party/explosion.mp3");
 
 		// soccer
 		this.load.image("soccer-field", "/assets/img/soccer/soccer-field.png");
