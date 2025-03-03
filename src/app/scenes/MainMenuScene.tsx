@@ -1,5 +1,5 @@
 import { Scene } from "phaser";
-import { themeManager } from "@/game";
+import { themeManager, soundManager } from "@/game";
 import { colors, hexadecimalColors } from "../constants/colors";
 import { KeyboardNavigation } from "../../utils/NavigationUtils";
 
@@ -18,43 +18,54 @@ export class MainMenuScene extends Scene {
 		// space
 		this.load.image("blue-galaxy", "/assets/img/space/blue-galaxy.png");
 		this.load.image("asteroid", "/assets/img/space/asteroid.png");
-		this.load.audio("space-theme", "/assets/audio/space/theme.mp3")
-		this.load.audio("space-explosion", "/assets/audio/space/explosion.mp3")
+		this.load.audio("space-theme", "/assets/audio/space/theme.mp3");
+		this.load.audio("space-explosion", "/assets/audio/space/explosion.mp3");
 
 		// birthday party
 		this.load.image("party-background", "/assets/img/party/party-bg.png");
 		this.load.image("balloon", "/assets/img/party/white-balloon.png");
-		this.load.audio("party-theme", "/assets/audio/party/theme.mp3")
-		this.load.audio("party-explosion", "/assets/audio/party/explosion.mp3")
+		this.load.audio("party-theme", "/assets/audio/party/theme.mp3");
+		this.load.audio("party-explosion", "/assets/audio/party/explosion.mp3");
 
 		// soccer
 		this.load.image("soccer-field", "/assets/img/soccer/soccer-field.png");
 		this.load.image("soccer-ball", "/assets/img/soccer/soccer-ball.png");
-		this.load.audio("soccer-theme", "/assets/audio/soccer/theme.mp3")
-		this.load.audio("soccer-explosion", "/assets/audio/soccer/explosion.mp3")
-		
+		this.load.audio("soccer-theme", "/assets/audio/soccer/theme.mp3");
+		this.load.audio("soccer-explosion", "/assets/audio/soccer/explosion.mp3");
+
 		// beach
 		this.load.image("beach-background", "/assets/img/beach/beach-bg.png");
 		this.load.image("coconut", "/assets/img/beach/coconut.png");
 		this.load.audio("beach-theme", "/assets/audio/beach/theme.mp3");
 		this.load.audio("beach-explosion", "/assets/audio/beach/explosion.m4a");
+
+		// Add game music if needed separately from theme music
+		this.load.audio("space-game", "/assets/audio/space/game.mp3");
+		this.load.audio("party-game", "/assets/audio/party/game.mp3");
+		this.load.audio("soccer-game", "/assets/audio/soccer/game.mp3");
+		this.load.audio("beach-game", "/assets/audio/beach/game.mp3");
+
+		// Optional: Add missile sound effects
+		this.load.audio("space-missile", "/assets/audio/space/missile.mp3");
+		this.load.audio("party-missile", "/assets/audio/party/missile.mp3");
+		this.load.audio("soccer-missile", "/assets/audio/soccer/missile.mp3");
+		this.load.audio("beach-missile", "/assets/audio/beach/missile.mp3");
 	}
 
 	create() {
 		const { width, height } = this.cameras.main;
 
 		themeManager.setScene(this);
+		soundManager.setScene(this);
+
+		// Start playing theme music
+		soundManager.playMusic("theme");
+
 		themeManager.createBackground();
 		themeManager.createMenuBackground();
 
 		// Initialize keyboard navigation
 		this.navigation = new KeyboardNavigation(this).init();
-
-		// Create container background with alpha
-		// const horizontalPadding = 80;
-		// const verticalPadding = 40;
-		// const menuHeight = 250;
-		// const menuWidth = 400;
 
 		// Title
 		this.add

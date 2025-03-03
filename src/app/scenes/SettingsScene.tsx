@@ -6,7 +6,7 @@ import {
 	KeyboardNavigation,
 	NavigationItem,
 } from "../../utils/NavigationUtils";
-import { gameSettings, themeManager, GameSettings } from "@/game";
+import { gameSettings, themeManager, soundManager } from "@/game";
 
 export class SettingsScene extends Scene {
 	private navigation!: KeyboardNavigation;
@@ -195,8 +195,12 @@ export class SettingsScene extends Scene {
 
 				if (label === "Music:") {
 					gameSettings.musicVolume = value;
+					// Update sound manager volume
+					soundManager.updateVolumes();
 				} else {
 					gameSettings.sfxVolume = value;
+					// Update sound manager volume
+					soundManager.updateVolumes();
 				}
 			});
 
@@ -275,7 +279,10 @@ export class SettingsScene extends Scene {
 		gameSettings.soundEnabled = !gameSettings.soundEnabled;
 		soundText.setText(gameSettings.soundEnabled ? "ON" : "OFF");
 		soundText.setColor(gameSettings.soundEnabled ? colors.green : colors.red);
-		// Here you would implement the actual sound toggle logic
+
+		// Update sound manager
+		soundManager.toggleSound(gameSettings.soundEnabled);
+
 		console.log(`Sound ${gameSettings.soundEnabled ? "enabled" : "disabled"}`);
 	}
 }

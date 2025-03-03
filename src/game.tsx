@@ -1,5 +1,6 @@
 import { Game, Types } from "phaser";
 import { ThemeManager } from "./utils/ThemeManager";
+import { SoundManager } from "./utils/SoundManager";
 import { MainMenuScene } from "./app/scenes/MainMenuScene";
 import { GameScene } from "./app/scenes/GameScene";
 import { GameOverScene } from "./app/scenes/GameOverScene";
@@ -7,8 +8,7 @@ import { ModeSelectScene } from "./app/scenes/ModeSelectScene";
 import { LetterSelectScene } from "./app/scenes/LetterSelectScene";
 import { PauseScene } from "./app/scenes/PauseScene";
 import { SettingsScene } from "./app/scenes/SettingsScene";
-import { GameSettings } from "../src/app/constants/definitions"
-
+import { GameSettings } from "../src/app/constants/definitions";
 
 export const gameSettings: GameSettings = {
 	theme: "space",
@@ -18,6 +18,7 @@ export const gameSettings: GameSettings = {
 };
 
 export const themeManager = new ThemeManager();
+export const soundManager = new SoundManager(themeManager);
 
 export const gameConfig: Types.Core.GameConfig = {
 	type: Phaser.AUTO,
@@ -28,7 +29,6 @@ export const gameConfig: Types.Core.GameConfig = {
 	physics: {
 		default: "arcade",
 		arcade: {
-			// TODO: ask claude about x: 0 gravity
 			gravity: { x: 0, y: 0 },
 			debug: false,
 		},
