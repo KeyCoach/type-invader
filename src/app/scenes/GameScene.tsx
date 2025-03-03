@@ -1,9 +1,9 @@
-// GameScene.tsx
+// GameScene.tsx (partial update with sound implementation)
 import { Scene } from "phaser";
-import { themeManager } from "@/game";
+import { themeManager, soundManager } from "@/game";
 import { GameMechanics } from "../../utils/GameMechanics";
 import { GameUI } from "../../utils/GameUI";
-import { MultiplierInfo } from "../constants/definitions"
+import { MultiplierInfo } from "../constants/definitions";
 
 export class GameScene extends Scene {
 	private mode: "free" | "letter" = "free";
@@ -47,6 +47,11 @@ export class GameScene extends Scene {
 	async create() {
 		// Set up the theme and background
 		themeManager.setScene(this);
+		soundManager.setScene(this);
+
+		// Switch from menu music to game music
+		soundManager.playMusic("game");
+
 		themeManager.createBackground();
 
 		// Create the ship sprite
@@ -96,10 +101,15 @@ export class GameScene extends Scene {
 					result.asteroidX,
 					result.asteroidY
 				);
+
+				// TODO: Play missile fire sound
+				// soundManager.playMissileFire();
 			}
 
-			// If an asteroid was destroyed, update score display
+			// If an asteroid was destroyed, update score display and play explosion
 			if (result.destroyedAsteroid) {
+				soundManager.playExplosion();
+
 				const scoreResult = this.mechanics.getScore();
 				this.ui.updateScore(scoreResult);
 			}
@@ -198,6 +208,9 @@ export class GameScene extends Scene {
 			this.tweens.pauseAll();
 			this.anims.pauseAll();
 			this.scene.launch("PauseScene", { mainScene: this.scene.key });
+
+			// Pause the sound
+			this.sound.pauseAll();
 		} else {
 			// Resume game systems
 			this.physics.world.isPaused = false;
@@ -206,6 +219,9 @@ export class GameScene extends Scene {
 			this.tweens.resumeAll();
 			this.anims.resumeAll();
 			this.scene.stop("PauseScene");
+
+			// Resume sound
+			this.sound.resumeAll();
 		}
 	};
 

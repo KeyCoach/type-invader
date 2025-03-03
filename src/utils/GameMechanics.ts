@@ -1,6 +1,6 @@
 // GameMechanics.ts
 import { Scene } from "phaser";
-import { themeManager } from "@/game";
+import { themeManager, soundManager } from "@/game";
 import { fetchWords } from "../app/constants/wordsApi";
 import { Asteroid } from "../app/constants/definitions";
 
