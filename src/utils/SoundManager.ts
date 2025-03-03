@@ -24,6 +24,32 @@ export class SoundManager {
 		}
 	}
 
+	// In SoundManager.ts, add this new method
+	playMenuMusic(): void {
+		if (!this.scene || !gameSettings.soundEnabled) return;
+
+        // Phaser random number between 1 and 3
+        const randomMenuMusic = Phaser.Math.Between(1, 3);
+
+		try {
+			// Stop previous music if playing
+			if (this.bgMusic && this.bgMusic.isPlaying) {
+				this.bgMusic.stop();
+			}
+
+			this.bgMusic = this.scene.sound.add(`menu-music-${randomMenuMusic}`, {
+				loop: true,
+				volume: gameSettings.musicVolume,
+			});
+
+			this.bgMusic.play();
+		} catch (error) {
+			console.error(`Error playing menu music: ${error}`);
+			// Fallback to theme music if menu music fails
+			this.playMusic("theme");
+		}
+	}
+
 	// Play explosion sound when asteroid is destroyed
 	playExplosion(): void {
 		if (!this.scene) return;
@@ -54,7 +80,7 @@ export class SoundManager {
 		if (!this.scene || !gameSettings.soundEnabled) return;
 
 		const theme = this.themeManager.getCurrentTheme();
-		const musicKey = musicType === "theme" ? `${theme}-theme` : `${theme}-game`;
+		const musicKey = musicType === "theme" ? `${theme}-theme` : `${theme}-theme`;
 
 		try {
 			// Stop previous music if playing

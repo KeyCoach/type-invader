@@ -40,7 +40,9 @@ export class MainMenuScene extends Scene {
 		this.load.audio("beach-explosion", "/assets/audio/beach/explosion.m4a");
 
 		// TODO: Add game music for the menu screens
-		// this.load.audio("menu-music", "/assets/audio/menu.mp3");
+		this.load.audio("menu-music-1", "/assets/audio/menu-1.mp3");
+		this.load.audio("menu-music-2", "/assets/audio/menu-2.mp3");
+		this.load.audio("menu-music-3", "/assets/audio/menu-3.mp3");
 
 		// TOD: Add missile sound effects by theme
 		// this.load.audio("{theme}-missile", "/assets/audio/theme/missile.mp3");
@@ -52,8 +54,7 @@ export class MainMenuScene extends Scene {
 		themeManager.setScene(this);
 		soundManager.setScene(this);
 
-		// Start playing theme music
-		soundManager.playMusic("theme");
+		soundManager.playMenuMusic();
 
 		themeManager.createBackground();
 		themeManager.createMenuBackground();
