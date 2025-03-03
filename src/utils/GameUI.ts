@@ -3,7 +3,8 @@ import Phaser from "phaser";
 import { Scene } from "phaser";
 import { colors, hexadecimalColors } from "../app/constants/colors";
 import PauseButton from "../components/PauseButton";
-import { StatsDisplay } from "../app/constants/definitions"
+import { StatsDisplay } from "../app/constants/definitions";
+import { soundManager } from "@/game";
 
 export class GameUI {
 	private scene: Scene;
@@ -251,7 +252,13 @@ export class GameUI {
 		});
 	}
 
-	showStats(stats: { wpm: number; accuracy: number; wordsCompleted: number; totalKeysPressed: number; mostProblematicChars?: [string, number][] }): StatsDisplay {
+	showStats(stats: {
+		wpm: number;
+		accuracy: number;
+		wordsCompleted: number;
+		totalKeysPressed: number;
+		mostProblematicChars?: [string, number][];
+	}): StatsDisplay {
 		const { width, height } = this.scene.cameras.main;
 		this.clearStatsElements();
 
@@ -315,7 +322,10 @@ export class GameUI {
 			stats.mostProblematicChars.forEach(
 				(char: [string, number], index: number) => {
 					errorText += `'${char[0]}' (${char[1]})`;
-					if (stats.mostProblematicChars && index < stats.mostProblematicChars.length - 1) {
+					if (
+						stats.mostProblematicChars &&
+						index < stats.mostProblematicChars.length - 1
+					) {
 						errorText += ", ";
 					}
 				}

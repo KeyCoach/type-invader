@@ -2,10 +2,8 @@
 
 import { Scene } from "phaser";
 import { alphaValues, colors, hexadecimalColors } from "../constants/colors";
-import {
-	KeyboardNavigation,
-	NavigationItem,
-} from "../../utils/NavigationUtils";
+import { KeyboardNavigation } from "../../utils/NavigationUtils";
+import { NavigationItem, GameSettings } from "../constants/definitions";
 import { gameSettings, themeManager, soundManager } from "@/game";
 
 export class SettingsScene extends Scene {
@@ -272,6 +270,8 @@ export class SettingsScene extends Scene {
 		});
 
 		console.log(`Theme set to ${gameSettings.theme}`);
+
+		// Restart the scene to apply theme changes including sounds
 		this.scene.restart();
 	}
 
