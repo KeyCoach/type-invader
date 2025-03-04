@@ -1,7 +1,7 @@
 // PauseScene.ts
 import { Scene } from "phaser";
 import { colors } from "../constants/colors";
-import GameScene from "./GameScene"; 
+import { GameScene } from "./GameScene"; 
 
 export class PauseScene extends Scene {
 	private mainScene!: string;
@@ -95,7 +95,7 @@ export class PauseScene extends Scene {
 		this.input.keyboard?.on("keydown-S", this.navigateDown, this);
 		this.input.keyboard?.on("keydown-ENTER", this.selectOption, this);
 		this.input.keyboard?.on("keydown-SPACE", this.selectOption, this);
-		this.input.keyboard?.on("keydown-ESC", this.resumeGame, this);
+		// this.input.keyboard?.on("keydown-ESC", this.resumeGame, this);
 	}
 
 	navigateUp() {
@@ -144,7 +144,7 @@ export class PauseScene extends Scene {
 		const gameScene = this.scene.get(this.mainScene) as GameScene;
 	
 		if (gameScene && typeof gameScene.togglePause === "function") {
-			gameScene.togglePause(); // ✅ Properly unpauses everything
+			gameScene.togglePause(); // Properly unpauses everything
 		}
 	
 		this.scene.stop();

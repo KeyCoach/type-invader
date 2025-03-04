@@ -92,8 +92,6 @@ export class GameMechanics {
 		}
 	}
 
-	// TODO; Figure out why E, U, and others have so few words with different starting letters
-	// method to prepare the word pool by organizing by first letter
 	private prepareWordPool(words: string[]) {
 		this.wordsByFirstLetter.clear();
 
