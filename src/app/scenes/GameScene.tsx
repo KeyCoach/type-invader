@@ -198,6 +198,7 @@ export class GameScene extends Scene {
 	}
 
 	togglePause = () => {
+
 		this.isPaused = !this.isPaused;
 
 		if (this.isPaused) {

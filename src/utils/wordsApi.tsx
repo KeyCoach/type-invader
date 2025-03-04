@@ -1,5 +1,6 @@
 import { gameSettings } from "@/game";
-import { DatamuseWord } from "../constants/definitions"
+import { DatamuseWord } from "../app/constants/definitions"
+import { INAPPROPRIATE_WORDS } from "@/app/constants/inappropriateWords";
 
 
 const BASE_URL = "https://api.datamuse.com/words";
@@ -54,9 +55,13 @@ async function fetchWords(letter?: string): Promise<string[]> {
 }
 
 /**
- * Fetch a list of words from Datamuse API.
+ * Fetch words from the Datamuse API and filter out invalid words.
+ * Ensures words:
+ * - Do not start with "-"
+ * - Are less than 10 letters long
+ * - Are not inappropriate
  * @param {string} query - The Datamuse API query URL.
- * @returns {Promise<string[]>} - An array of words.
+ * @returns {Promise<string[]>} - A filtered array of words.
  */
 async function extractValidWords(query: string): Promise<string[]> {
   try {
@@ -67,14 +72,29 @@ async function extractValidWords(query: string): Promise<string[]> {
 
     const json: DatamuseWord[] = await response.json();
 
-    // Extract words as strings, ensuring no words start with "-"
-    const words = json.map((item) => item.word).filter((word) => !word.startsWith("-"));
+    // Extract words as strings
+    let words = json.map((item) => item.word);
 
-    return words;
+    // Filter out invalid words
+    words = words
+      .filter(word => !word.startsWith("-"))  // Remove invalid API results
+      .filter(word => word.length < 10);     // Ensure words are 9 letters max
+
+    // Apply inappropriate word filtering
+    return filterInappropriateWords(words);
   } catch (error) {
     console.error(`Error fetching word list:`, error);
     return [];
   }
+}
+
+/**
+ * Filters out inappropriate words from a given word list.
+ * @param {string[]} words - The list of words to filter.
+ * @returns {string[]} - The cleaned list with inappropriate words removed.
+ */
+function filterInappropriateWords(words: string[]): string[] {
+  return words.filter(word => !INAPPROPRIATE_WORDS.has(word.toLowerCase()));
 }
 
 /**
