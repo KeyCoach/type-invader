@@ -2,10 +2,12 @@ import { Scene } from "phaser";
 import { themeManager, soundManager } from "@/game";
 import { colors, hexadecimalColors } from "../constants/colors";
 import { KeyboardNavigation } from "../../utils/NavigationUtils";
+import { MenuTitle } from "../../components/MenuTitle";
 
 export class MainMenuScene extends Scene {
 	private navigation!: KeyboardNavigation;
 	private nextStarTime: number = 0;
+	private menuTitle!: MenuTitle;
 
 	constructor() {
 		super({ key: "MainMenuScene" });
@@ -51,26 +53,38 @@ export class MainMenuScene extends Scene {
 	create() {
 		const { width, height } = this.cameras.main;
 
+		// Set scene in managers
 		themeManager.setScene(this);
 		soundManager.setScene(this);
 
+		// Start menu music
 		soundManager.playMenuMusic();
 
+		// Create background (either standard or glitch-style)
 		themeManager.createBackground();
 		themeManager.createMenuBackground();
 
 		// Initialize keyboard navigation
 		this.navigation = new KeyboardNavigation(this).init();
 
-		// Title
-		this.add
-			.text(width / 2, height / 2 - 80, "Type Invader", {
-				fontSize: "48px",
-				fontFamily: "Monospace",
-				color: colors.white,
-			})
-			.setOrigin(0.5)
-			.setDepth(1);
+		// Create animated title using the new MenuTitle class
+		// You can customize colors based on theme later
+		this.menuTitle = new MenuTitle(
+			this,
+			"TYPE INVADERS",
+			height / 2 - 80,
+			"48px",
+			{
+				main: colors.white,
+				shadow1: "#00FFFF", // Cyan
+				shadow2: "#FF00FF", // Magenta
+				glowColor: 0xffffff,
+				glowAlpha: 0.1,
+			}
+		);
+
+		// Create and animate the title
+		this.menuTitle.createAnimatedTitle(0, 120);
 
 		// Play button
 		const playButton = this.add
@@ -138,11 +152,20 @@ export class MainMenuScene extends Scene {
 		if (time > this.nextStarTime) {
 			this.createShootingStar();
 			this.nextStarTime = time + Phaser.Math.Between(500, 2000);
+
+			// Occasionally trigger a title glitch effect when a shooting star appears
+			if (Phaser.Math.Between(0, 10) > 7) {
+				this.menuTitle.triggerFullGlitch();
+			}
 		}
 	}
 
 	shutdown() {
 		themeManager.stopThemeEffects();
+		// Clean up the menu title
+		if (this.menuTitle) {
+			this.menuTitle.destroy();
+		}
 	}
 
 	private createShootingStar() {
