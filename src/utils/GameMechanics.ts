@@ -1,7 +1,7 @@
 // GameMechanics.ts
 import { Scene } from "phaser";
 import { themeManager, soundManager } from "@/game";
-import { fetchWords } from "../app/constants/wordsApi";
+import { fetchWords } from "./wordsApi";
 import { Asteroid } from "../app/constants/definitions";
 
 const MULTIPLIER_THRESHOLDS = {

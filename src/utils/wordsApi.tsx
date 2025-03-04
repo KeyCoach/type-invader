@@ -1,5 +1,6 @@
 import { gameSettings } from "@/game";
-import { DatamuseWord } from "../constants/definitions"
+import { DatamuseWord } from "../app/constants/definitions"
+import { INAPPROPRIATE_WORDS } from "@/app/constants/inappropriateWords";
 
 
 const BASE_URL = "https://api.datamuse.com/words";
@@ -68,13 +69,25 @@ async function extractValidWords(query: string): Promise<string[]> {
     const json: DatamuseWord[] = await response.json();
 
     // Extract words as strings, ensuring no words start with "-"
-    const words = json.map((item) => item.word).filter((word) => !word.startsWith("-"));
+    let words = json.map((item) => item.word).filter((word) => !word.startsWith("-"));
+
+    // Filter out NSFW words
+    words = filterInappropriateWords(words);
 
     return words;
   } catch (error) {
     console.error(`Error fetching word list:`, error);
     return [];
   }
+}
+
+/**
+ * Filters out inappropriate words from a given word list.
+ * @param {string[]} words - The list of words to filter.
+ * @returns {string[]} - The cleaned list with inappropriate words removed.
+ */
+function filterInappropriateWords(words: string[]): string[] {
+  return words.filter(word => !INAPPROPRIATE_WORDS.has(word.toLowerCase()));
 }
 
 /**
